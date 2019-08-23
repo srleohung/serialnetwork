@@ -16,18 +16,40 @@ var serialConfig serial.Config = serial.Config{
 	StopBits: serial.Stop1,
 }
 
+var serverHost string = "http://localhost:9876"
+
+var deviceHostPort string = ":9877"
+
+var rxLength int = 1
+
+var message []byte = []byte("9876")
+
 func main() {
-	SerialDevice := serialnetwork.NewSerialDevice(serialConfig, 1)
+	// Init service
+	SerialDevice := serialnetwork.NewSerialDevice(serialConfig, serverHost, deviceHostPort, rxLength)
 	SerialDevice.Init()
 
-	rxChannel := SerialDevice.GetRxChannel()
-	txChannel := SerialDevice.GetTxChannel()
-	txWroteChannel := SerialDevice.GetTxWroteChannel()
+	// Get channel
+	var rxChannel chan []byte
+	if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
+		logger.Info("Got RxChannel")
+	}
+	var txChannel chan []byte
+	if txChannel = SerialDevice.GetTxChannel(); txChannel != nil {
+		logger.Info("Got TxChannel")
+	}
+	var txWroteChannel chan []byte
+	if txWroteChannel = SerialDevice.GetTxWroteChannel(); txWroteChannel != nil {
+		logger.Info("Got TxWroteChannel")
+	}
 
+	// Start channel handler service
 	go SerialDevice.RxResponseServer()
 	go SerialDevice.TxRequestServer()
 
-	txChannel <- []byte("101")
-	logger.Info(<-txWroteChannel)
-	logger.Info(<-rxChannel)
+	// Test channel
+	txChannel <- message
+	logger.Infof("txWroteChannel % x", <-txWroteChannel)
+	forever := make(chan bool)
+	<-forever
 }

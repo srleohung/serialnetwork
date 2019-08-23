@@ -12,9 +12,11 @@ type SerialDevice struct {
 	rxLength       int
 	txChannel      chan []byte
 	txWroteChannel chan []byte
+	serverHost     string
+	deviceHostPort string
 }
 
-func NewSerialDevice(serialConfig serial.Config, rxLength int) *SerialDevice {
+func NewSerialDevice(serialConfig serial.Config, serverHost, deviceHostPort string, rxLength int) *SerialDevice {
 	port, err := serial.OpenPort(&serialConfig)
 	if serialLogger.IsErr(err) {
 		return nil
@@ -27,12 +29,26 @@ func NewSerialDevice(serialConfig serial.Config, rxLength int) *SerialDevice {
 		rxLength:       rxLength,
 		txChannel:      nil,
 		txWroteChannel: nil,
+		serverHost:     serverHost,
+		deviceHostPort: deviceHostPort,
 	}
 }
+
+func (sn *SerialDevice) Init() bool {
+	return sn.init()
+}
+
+// Serial Rx
 
 func (sn *SerialDevice) GetRxChannel() chan []byte {
 	return sn.rxChannel
 }
+
+func (sn *SerialDevice) RxResponseServer() {
+	sn.rxResponseServer()
+}
+
+// Serial Tx
 
 func (sn *SerialDevice) GetTxChannel() chan []byte {
 	return sn.txChannel
@@ -40,14 +56,6 @@ func (sn *SerialDevice) GetTxChannel() chan []byte {
 
 func (sn *SerialDevice) GetTxWroteChannel() chan []byte {
 	return sn.getTxWroteChannel()
-}
-
-func (sn *SerialDevice) Init() bool {
-	return sn.init()
-}
-
-func (sn *SerialDevice) RxResponseServer() {
-	sn.rxResponseServer()
 }
 
 func (sn *SerialDevice) TxRequestServer() {

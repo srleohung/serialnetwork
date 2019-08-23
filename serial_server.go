@@ -1,33 +1,51 @@
 package serialnetwork
 
 type SerialServer struct {
-	rxChannel chan []byte
-	txChannel chan []byte
+	rxChannel      chan []byte
+	txChannel      chan []byte
+	startable      bool
+	serverHostPort string
+	deviceHost     string
 }
 
-func NewSerialServer() *SerialServer {
+func NewSerialServer(serverHostPort, deviceHost string) *SerialServer {
 	return &SerialServer{
-		rxChannel: make(chan []byte),
-		txChannel: make(chan []byte),
+		rxChannel:      nil,
+		txChannel:      nil,
+		serverHostPort: serverHostPort,
+		deviceHost:     deviceHost,
+		startable:      false,
 	}
 }
 
-func (ss *SerialServer) GetRxChannel() chan []byte {
-	return ss.rxChannel
+func (ss *SerialServer) Init() bool {
+	return ss.init()
 }
 
-func (ss *SerialServer) GetTxChannel() chan []byte {
-	return ss.txChannel
+// Serial Rx
+
+func (ss *SerialServer) GetRxChannel() chan []byte {
+	return ss.rxChannel
 }
 
 func (ss *SerialServer) RxResponseServer() {
 	ss.rxResponseServer()
 }
 
-func (ss *SerialServer) TxRequest(bytes []byte) {
-	ss.txRequest(bytes)
+// Serial Tx
+
+func (ss *SerialServer) GetTxChannel() chan []byte {
+	return ss.txChannel
+}
+
+func (ss *SerialServer) TxRequest(bytes []byte) []byte {
+	return ss.txRequest(bytes)
 }
 
 func (ss *SerialServer) TxRequestAndRxResponse(bytes []byte) []byte {
 	return ss.txRequestAndRxResponse(bytes)
+}
+
+func (ss *SerialServer) TxRequestServer() {
+	ss.txRequestServer()
 }
