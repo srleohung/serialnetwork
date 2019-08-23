@@ -29,9 +29,9 @@ func (sn *SerialDevice) init() bool {
 func (sn *SerialDevice) serialRX() {
 	for {
 		bytes := make([]byte, sn.rxLength)
-		if _, err := sn.port.Read(bytes); IsError(err) {
+		if _, err := sn.port.Read(bytes); serialLogger.IsErr(err) {
 			err = sn.port.Close()
-			IsError(err)
+			serialLogger.IsErr(err)
 			sn.port = nil
 		}
 		select {
@@ -45,7 +45,7 @@ func (sn *SerialDevice) serialRX() {
 func (sn *SerialDevice) serialTX() {
 	for {
 		if sn.port == nil {
-			if port, err := serial.OpenPort(sn.serialConfig); IsError(err) {
+			if port, err := serial.OpenPort(sn.serialConfig); serialLogger.IsErr(err) {
 				time.Sleep(1000 * time.Millisecond)
 				continue
 			} else {
@@ -54,10 +54,10 @@ func (sn *SerialDevice) serialTX() {
 		}
 		select {
 		case bytes := <-sn.txChannel:
-			serialLogger.Debug(bytes)
-			if _, err := sn.port.Write(bytes); IsError(err) {
+			serialLogger.Debugf("% x", bytes)
+			if _, err := sn.port.Write(bytes); serialLogger.IsErr(err) {
 				err = sn.port.Close()
-				IsError(err)
+				serialLogger.IsErr(err)
 				sn.port = nil
 				continue
 			}

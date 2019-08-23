@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-var networkLogger Logger = NewLogger("network")
+var httpLogger Logger = NewLogger("http")
 
 const (
 	SERIAL_NETWORK_SERVER_HOST string = "http://localhost:9876"
@@ -29,7 +29,7 @@ func (sn *SerialDevice) rxResponseServer() {
 
 func (sn *SerialDevice) rxResponse(url, contentType string, bytes []byte) {
 	_, err := http.Post(url, contentType, NewBuffer(bytes))
-	IsError(err)
+	httpLogger.IsErr(err)
 }
 
 func (sn *SerialDevice) txRequestServer() {
@@ -37,12 +37,12 @@ func (sn *SerialDevice) txRequestServer() {
 	http.HandleFunc(TX_REQUEST, sn.txRequest)
 	http.HandleFunc(TX_REQUEST_AND_RX_RESPONSE, sn.txRequestAndRxResponse)
 	err := http.ListenAndServe(":9877", nil)
-	IsError(err)
+	httpLogger.IsErr(err)
 }
 
 func (sn *SerialDevice) txRequest(w http.ResponseWriter, r *http.Request) {
-	if txRequest, err := ioutil.ReadAll(r.Body); !IsError(err) {
-		networkLogger.Debug(txRequest)
+	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
+		httpLogger.Debugf("% x", txRequest)
 		sn.txChannel <- txRequest
 		w.Write(<-sn.txWroteChannel)
 	} else {
@@ -51,7 +51,7 @@ func (sn *SerialDevice) txRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (sn *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Request) {
-	if txRequest, err := ioutil.ReadAll(r.Body); !IsError(err) {
+	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		sn.txChannel <- txRequest
 		<-sn.txWroteChannel
 		w.Write(<-sn.rxChannel)
@@ -63,11 +63,11 @@ func (sn *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Re
 func (ss *SerialServer) rxResponseServer() {
 	http.HandleFunc(RX_RESPONSE, ss.rxResponse)
 	err := http.ListenAndServe(":9876", nil)
-	IsError(err)
+	httpLogger.IsErr(err)
 }
 
 func (ss *SerialServer) rxResponse(w http.ResponseWriter, r *http.Request) {
-	if rxResponse, err := ioutil.ReadAll(r.Body); !IsError(err) {
+	if rxResponse, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		ss.rxChannel <- rxResponse
 		w.Write(rxResponse)
 	} else {
@@ -77,15 +77,15 @@ func (ss *SerialServer) rxResponse(w http.ResponseWriter, r *http.Request) {
 
 func (ss *SerialServer) txRequest(bytes []byte) {
 	_, err := http.Post(SERIAL_DEVICE_SERVER_HOST+TX_REQUEST, CONTENT_TYPE, NewBuffer(bytes))
-	IsError(err)
+	httpLogger.IsErr(err)
 }
 
 func (ss *SerialServer) txRequestAndRxResponse(bytes []byte) []byte {
 	rxResponse, err := http.Post(SERIAL_DEVICE_SERVER_HOST+TX_REQUEST, CONTENT_TYPE, NewBuffer(bytes))
-	IsError(err)
+	httpLogger.IsErr(err)
 	defer rxResponse.Body.Close()
 	rx, err := ioutil.ReadAll(rxResponse.Body)
-	IsError(err)
+	httpLogger.IsErr(err)
 	return rx
 }
 

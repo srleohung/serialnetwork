@@ -1,7 +1,6 @@
 package serialnetwork
 
 import (
-	. "github.com/srleohung/serialnetwork/tools"
 	"github.com/tarm/serial"
 )
 
@@ -17,7 +16,7 @@ type SerialDevice struct {
 
 func NewSerialDevice(serialConfig serial.Config, rxLength int) *SerialDevice {
 	port, err := serial.OpenPort(&serialConfig)
-	if IsError(err) {
+	if serialLogger.IsErr(err) {
 		return nil
 	}
 	return &SerialDevice{
