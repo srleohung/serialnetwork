@@ -8,61 +8,67 @@ import (
 
 var serialLogger Logger = NewLogger("serial")
 
-func (sn *SerialDevice) getTxWroteChannel() chan []byte {
-	if sn.txWroteChannel == nil {
-		sn.txWroteChannel = make(chan []byte)
+func (sd *SerialDevice) getTxWroteChannel() chan []byte {
+	if sd.txWroteChannel == nil {
+		sd.txWroteChannel = make(chan []byte)
 	}
-	return sn.txWroteChannel
+	return sd.txWroteChannel
 }
 
-func (sn *SerialDevice) init() bool {
-	sn.rxChannel = make(chan []byte)
-	sn.txChannel = make(chan []byte)
-	if !sn.startable {
-		go sn.serialRX()
-		go sn.serialTX()
-		sn.startable = true
+func (sd *SerialDevice) init(serialConfig serial.Config, rxLength int) bool {
+	sd.port = nil
+	sd.rxLength = rxLength
+	sd.serialConfig = &serialConfig
+	sd.rxChannel = make(chan []byte)
+	sd.txChannel = make(chan []byte)
+	if port, err := serial.OpenPort(&serialConfig); !serialLogger.IsErr(err) {
+		sd.port = port
 	}
-	return sn.startable
+	if !sd.startable {
+		go sd.serialRX()
+		go sd.serialTX()
+		sd.startable = true
+	}
+	return sd.startable
 }
 
-func (sn *SerialDevice) serialRX() {
+func (sd *SerialDevice) serialRX() {
 	for {
-		bytes := make([]byte, sn.rxLength)
-		if _, err := sn.port.Read(bytes); serialLogger.IsErr(err) {
-			err = sn.port.Close()
+		bytes := make([]byte, sd.rxLength)
+		if _, err := sd.port.Read(bytes); serialLogger.IsErr(err) {
+			err = sd.port.Close()
 			serialLogger.IsErr(err)
-			sn.port = nil
+			sd.port = nil
 		}
 		select {
-		case sn.rxChannel <- bytes:
+		case sd.rxChannel <- bytes:
 		case <-time.After(time.Second):
 			continue
 		}
 	}
 }
 
-func (sn *SerialDevice) serialTX() {
+func (sd *SerialDevice) serialTX() {
 	for {
-		if sn.port == nil {
-			if port, err := serial.OpenPort(sn.serialConfig); serialLogger.IsErr(err) {
-				time.Sleep(1000 * time.Millisecond)
+		if sd.port == nil {
+			if port, err := serial.OpenPort(sd.serialConfig); serialLogger.IsErr(err) {
+				time.Sleep(time.Second)
 				continue
 			} else {
-				sn.port = port
+				sd.port = port
 			}
 		}
 		select {
-		case bytes := <-sn.txChannel:
+		case bytes := <-sd.txChannel:
 			serialLogger.Debugf("% x", bytes)
-			if _, err := sn.port.Write(bytes); serialLogger.IsErr(err) {
-				err = sn.port.Close()
+			if _, err := sd.port.Write(bytes); serialLogger.IsErr(err) {
+				err = sd.port.Close()
 				serialLogger.IsErr(err)
-				sn.port = nil
+				sd.port = nil
 				continue
 			}
-			if sn.txWroteChannel != nil {
-				sn.txWroteChannel <- bytes
+			if sd.txWroteChannel != nil {
+				sd.txWroteChannel <- bytes
 			}
 		case <-time.After(time.Second):
 			continue

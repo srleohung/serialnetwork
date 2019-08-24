@@ -26,30 +26,30 @@ var message []byte = []byte("9876")
 
 func main() {
 	// Init service
-	SerialDevice := serialnetwork.NewSerialDevice(serialConfig, serverHost, deviceHostPort, rxLength)
-	SerialDevice.Init()
+	SerialDevice := serialnetwork.NewSerialDevice()
+	// SerialDevice.Init(serialConfig, rxLength)
 
 	// Get channel
-	var rxChannel chan []byte
-	if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
-		logger.Info("Got RxChannel")
-	}
-	var txChannel chan []byte
-	if txChannel = SerialDevice.GetTxChannel(); txChannel != nil {
-		logger.Info("Got TxChannel")
-	}
-	var txWroteChannel chan []byte
-	if txWroteChannel = SerialDevice.GetTxWroteChannel(); txWroteChannel != nil {
-		logger.Info("Got TxWroteChannel")
-	}
+	// var rxChannel chan []byte
+	// if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
+	// 	logger.Info("Got RxChannel")
+	// }
+	// var txChannel chan []byte
+	// if txChannel = SerialDevice.GetTxChannel(); txChannel != nil {
+	// 	logger.Info("Got TxChannel")
+	// }
+	// var txWroteChannel chan []byte
+	// if txWroteChannel = SerialDevice.GetTxWroteChannel(); txWroteChannel != nil {
+	// 	logger.Info("Got TxWroteChannel")
+	// }
 
 	// Start channel handler service
-	go SerialDevice.RxResponseServer()
-	go SerialDevice.TxRequestServer()
+	SerialDevice.RxResponseServer(serverHost)
+	SerialDevice.TxRequestServer(deviceHostPort)
 
 	// Test channel
-	txChannel <- message
-	logger.Infof("txWroteChannel % x", <-txWroteChannel)
+	// txChannel <- message
+	// logger.Infof("txWroteChannel % x", <-txWroteChannel)
 	forever := make(chan bool)
 	<-forever
 }

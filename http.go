@@ -2,57 +2,113 @@ package serialnetwork
 
 import (
 	. "bytes"
+	"encoding/json"
 	. "github.com/srleohung/serialnetwork/tools"
+	"github.com/tarm/serial"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 var httpLogger Logger = NewLogger("http")
 
 const (
-	HTTP_SERIAL_RX_PATH    string = "/serial/rx"
-	HTTP_SERIAL_TX_PATH    string = "/serial/tx"
-	HTTP_SERIAL_TX_RX_PATH string = "/serial/tx/rx"
+	HTTP_SERIAL_INIT_PATH  string = "/serialnetwork/serial/init"
+	HTTP_SERIAL_PING_PATH  string = "/serialnetwork/serial/ping"
+	HTTP_SERIAL_RX_PATH    string = "/serialnetwork/serial/rx"
+	HTTP_SERIAL_TX_PATH    string = "/serialnetwork/serial/tx"
+	HTTP_SERIAL_TX_RX_PATH string = "/serialnetwork/serial/tx/rx"
 	HTTP_CONTENT_TYPE      string = ""
+	HTTP_CONTENT_JSON_TYPE string = "application/json"
 )
 
 // Serial device
 
-func (sn *SerialDevice) rxResponseServer() {
+func (sd *SerialDevice) rxResponseServer(serverHost string) {
 	for {
-		sn.rxResponse(<-sn.rxChannel)
+		sd.rxResponse(<-sd.rxChannel)
 	}
 }
 
-func (sn *SerialDevice) rxResponse(bytes []byte) {
-	_, err := http.Post(sn.serverHost+HTTP_SERIAL_RX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
+func (sd *SerialDevice) rxResponse(bytes []byte) {
+	_, err := http.Post(sd.serverHost+HTTP_SERIAL_RX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
 	httpLogger.IsErr(err)
 }
 
-func (sn *SerialDevice) txRequestServer() {
-	sn.getTxWroteChannel()
-	http.HandleFunc(HTTP_SERIAL_TX_PATH, sn.txRequest)
-	http.HandleFunc(HTTP_SERIAL_TX_RX_PATH, sn.txRequestAndRxResponse)
-	err := http.ListenAndServe(sn.deviceHostPort, nil)
+func (sd *SerialDevice) txRequestServer(deviceHostPort string) {
+	sd.deviceHostPort = deviceHostPort
+	sd.getTxWroteChannel()
+	http.HandleFunc(HTTP_SERIAL_INIT_PATH, sd.initAPI)
+	http.HandleFunc(HTTP_SERIAL_PING_PATH, sd.ping)
+	http.HandleFunc(HTTP_SERIAL_TX_PATH, sd.txRequest)
+	http.HandleFunc(HTTP_SERIAL_TX_RX_PATH, sd.txRequestAndRxResponse)
+	err := http.ListenAndServe(sd.deviceHostPort, nil)
 	httpLogger.IsErr(err)
 }
 
-func (sn *SerialDevice) txRequest(w http.ResponseWriter, r *http.Request) {
-	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
-		httpLogger.Debugf("% x", txRequest)
-		sn.txChannel <- txRequest
-		w.Write(<-sn.txWroteChannel)
+func (sd *SerialDevice) ping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (sd *SerialDevice) initAPI(w http.ResponseWriter, r *http.Request) {
+	if config, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
+		var serialDeviceConfig SerialDeviceConfig
+		if err = json.Unmarshal(config, &serialDeviceConfig); !httpLogger.IsErr(err) {
+			if serialDeviceConfig.ServerHost != "" {
+				sd.serverHost = serialDeviceConfig.ServerHost
+			}
+			var serialConfig serial.Config
+			if serialDeviceConfig.Name != "" {
+				serialConfig.Name = serialDeviceConfig.Name
+			}
+			if serialDeviceConfig.Baud != 0 {
+				serialConfig.Baud = serialDeviceConfig.Baud
+			}
+			if serialDeviceConfig.ReadTimeout != 0 {
+				serialConfig.ReadTimeout = time.Duration(serialDeviceConfig.ReadTimeout) * time.Millisecond
+			}
+			if serialDeviceConfig.Size != 0 {
+				serialConfig.Size = serialDeviceConfig.Size
+			}
+			if serialDeviceConfig.Parity != 0 {
+				serialConfig.Parity = serial.Parity(serialDeviceConfig.Parity)
+			}
+			if serialDeviceConfig.StopBits != 0 {
+				serialConfig.StopBits = serial.StopBits(serialDeviceConfig.StopBits)
+			}
+			sd.serialConfig = &serialConfig
+			if serialDeviceConfig.RxLength == 0 {
+				serialDeviceConfig.RxLength = 1
+			}
+			if !sd.init(serialConfig, serialDeviceConfig.RxLength) {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusOK)
+			}
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
-func (sn *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Request) {
+func (sd *SerialDevice) txRequest(w http.ResponseWriter, r *http.Request) {
 	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		httpLogger.Debugf("% x", txRequest)
-		sn.txChannel <- txRequest
-		<-sn.txWroteChannel
-		w.Write(<-sn.rxChannel)
+		sd.txChannel <- txRequest
+		w.Write(<-sd.txWroteChannel)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func (sd *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Request) {
+	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
+		httpLogger.Debugf("% x", txRequest)
+		sd.txChannel <- txRequest
+		<-sd.txWroteChannel
+		w.Write(<-sd.rxChannel)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -69,7 +125,20 @@ func (ss *SerialServer) init() bool {
 	return ss.startable
 }
 
-func (ss *SerialServer) rxResponseServer() {
+func (ss *SerialServer) ping() bool {
+	_, err := http.Get(ss.deviceHost + HTTP_SERIAL_PING_PATH)
+	return httpLogger.IsErr(err)
+}
+
+func (ss *SerialServer) initSerialDevice(serialDeviceConfig SerialDeviceConfig) {
+	if serialDeviceConfigJson, err := json.Marshal(serialDeviceConfig); !httpLogger.IsErr(err) {
+		_, err := http.Post(ss.deviceHost+HTTP_SERIAL_INIT_PATH, HTTP_CONTENT_JSON_TYPE, NewBuffer(serialDeviceConfigJson))
+		httpLogger.IsErr(err)
+	}
+}
+
+func (ss *SerialServer) rxResponseServer(serverHostPort string) {
+	ss.serverHostPort = serverHostPort
 	http.HandleFunc(HTTP_SERIAL_RX_PATH, ss.rxResponse)
 	err := http.ListenAndServe(ss.serverHostPort, nil)
 	httpLogger.IsErr(err)
@@ -85,6 +154,8 @@ func (ss *SerialServer) rxResponse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ss *SerialServer) txRequest(bytes []byte) []byte {
+	httpLogger.Info(ss.deviceHost)
+
 	txRequest, err := http.Post(ss.deviceHost+HTTP_SERIAL_TX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
 	httpLogger.IsErr(err)
 	defer txRequest.Body.Close()
@@ -102,7 +173,7 @@ func (ss *SerialServer) txRequestAndRxResponse(bytes []byte) []byte {
 	return rx
 }
 
-func (ss *SerialServer) txRequestServer() {
+func (ss *SerialServer) txRequestServer(deviceHost string) {
 	for {
 		ss.txRequest(<-ss.txChannel)
 	}

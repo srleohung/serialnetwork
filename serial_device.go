@@ -16,48 +16,60 @@ type SerialDevice struct {
 	deviceHostPort string
 }
 
-func NewSerialDevice(serialConfig serial.Config, serverHost, deviceHostPort string, rxLength int) *SerialDevice {
-	port, err := serial.OpenPort(&serialConfig)
-	if serialLogger.IsErr(err) {
-		return nil
-	}
+type SerialDeviceConfig struct {
+	Name        string
+	Baud        int
+	ReadTimeout int
+	Size        byte
+	Parity      byte
+	StopBits    byte
+	RxLength    int
+	ServerHost  string
+}
+
+func NewSerialDevice() *SerialDevice {
 	return &SerialDevice{
-		port:           port,
-		serialConfig:   &serialConfig,
+		port:           nil,
+		serialConfig:   nil,
 		startable:      false,
 		rxChannel:      nil,
-		rxLength:       rxLength,
+		rxLength:       1,
 		txChannel:      nil,
 		txWroteChannel: nil,
-		serverHost:     serverHost,
-		deviceHostPort: deviceHostPort,
+		serverHost:     "",
+		deviceHostPort: "",
 	}
 }
 
-func (sn *SerialDevice) Init() bool {
-	return sn.init()
+func (sd *SerialDevice) Init(serialConfig serial.Config, rxLength int) bool {
+	return sd.init(serialConfig, rxLength)
 }
 
 // Serial Rx
 
-func (sn *SerialDevice) GetRxChannel() chan []byte {
-	return sn.rxChannel
+func (sd *SerialDevice) GetRxChannel() chan []byte {
+	return sd.rxChannel
 }
 
-func (sn *SerialDevice) RxResponseServer() {
-	sn.rxResponseServer()
+func (sd *SerialDevice) RxResponseServer(serverHost string) {
+	sd.SetServerHost(serverHost)
+	go sd.rxResponseServer(serverHost)
+}
+
+func (sd *SerialDevice) SetServerHost(serverHost string) {
+	sd.serverHost = serverHost
 }
 
 // Serial Tx
 
-func (sn *SerialDevice) GetTxChannel() chan []byte {
-	return sn.txChannel
+func (sd *SerialDevice) GetTxChannel() chan []byte {
+	return sd.txChannel
 }
 
-func (sn *SerialDevice) GetTxWroteChannel() chan []byte {
-	return sn.getTxWroteChannel()
+func (sd *SerialDevice) GetTxWroteChannel() chan []byte {
+	return sd.getTxWroteChannel()
 }
 
-func (sn *SerialDevice) TxRequestServer() {
-	sn.txRequestServer()
+func (sd *SerialDevice) TxRequestServer(deviceHostPort string) {
+	go sd.txRequestServer(deviceHostPort)
 }

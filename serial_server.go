@@ -8,12 +8,12 @@ type SerialServer struct {
 	deviceHost     string
 }
 
-func NewSerialServer(serverHostPort, deviceHost string) *SerialServer {
+func NewSerialServer() *SerialServer {
 	return &SerialServer{
 		rxChannel:      nil,
 		txChannel:      nil,
-		serverHostPort: serverHostPort,
-		deviceHost:     deviceHost,
+		serverHostPort: "",
+		deviceHost:     "",
 		startable:      false,
 	}
 }
@@ -22,20 +22,32 @@ func (ss *SerialServer) Init() bool {
 	return ss.init()
 }
 
+func (ss *SerialServer) Ping() bool {
+	return ss.ping()
+}
+
+func (ss *SerialServer) InitSerialDevice(serialDeviceConfig SerialDeviceConfig) {
+	ss.initSerialDevice(serialDeviceConfig)
+}
+
 // Serial Rx
 
 func (ss *SerialServer) GetRxChannel() chan []byte {
 	return ss.rxChannel
 }
 
-func (ss *SerialServer) RxResponseServer() {
-	ss.rxResponseServer()
+func (ss *SerialServer) RxResponseServer(serverHostPort string) {
+	go ss.rxResponseServer(serverHostPort)
 }
 
 // Serial Tx
 
 func (ss *SerialServer) GetTxChannel() chan []byte {
 	return ss.txChannel
+}
+
+func (ss *SerialServer) SetDeviceHost(deviceHost string) {
+	ss.deviceHost = deviceHost
 }
 
 func (ss *SerialServer) TxRequest(bytes []byte) []byte {
@@ -46,6 +58,7 @@ func (ss *SerialServer) TxRequestAndRxResponse(bytes []byte) []byte {
 	return ss.txRequestAndRxResponse(bytes)
 }
 
-func (ss *SerialServer) TxRequestServer() {
-	ss.txRequestServer()
+func (ss *SerialServer) TxRequestServer(deviceHost string) {
+	ss.SetDeviceHost(deviceHost)
+	go ss.txRequestServer(deviceHost)
 }

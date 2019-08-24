@@ -5,13 +5,25 @@ import (
 	. "github.com/srleohung/serialnetwork/tools"
 )
 
+var serverHostPost string = ":9876"
+
+var deviceHost string = "http://localhost:9877"
+
 var logger Logger = NewLogger("main")
 
 var message []byte = []byte("9876")
 
+var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
+	Name:       "/dev/tty.SLAB_USBtoUART",
+	Baud:       115200,
+	Size:       8,
+	RxLength:   1,
+	ServerHost: "http://localhost:9876",
+}
+
 func main() {
 	// Init service
-	SerialServer := serialnetwork.NewSerialServer(":9876", "http://localhost:9877")
+	SerialServer := serialnetwork.NewSerialServer()
 	SerialServer.Init()
 
 	// Get channel
@@ -25,12 +37,16 @@ func main() {
 	}
 
 	// Test service
-	logger.Infof("TxRequest % x", SerialServer.TxRequest(message))
+	// SerialServer.SetDeviceHost(deviceHost)
+	// logger.Infof("TxRequest % x", SerialServer.TxRequest(message))
 	// logger.Infof("TxRequestAndRxResponse % x", SerialServer.TxRequestAndRxResponse(message))
 
 	// Start channel handler service
-	go SerialServer.RxResponseServer()
-	go SerialServer.TxRequestServer()
+	SerialServer.RxResponseServer(serverHostPost)
+	SerialServer.TxRequestServer(deviceHost)
+
+	// Init serial device
+	SerialServer.InitSerialDevice(serialDeviceConfig)
 
 	// Test channel
 	txChannel <- message
