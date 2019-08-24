@@ -51,9 +51,9 @@ func (sd *SerialDevice) GetRxChannel() chan []byte {
 	return sd.rxChannel
 }
 
-func (sd *SerialDevice) RxResponseServer(serverHost string) {
+func (sd *SerialDevice) ResponseToServer(serverHost string) {
 	sd.SetServerHost(serverHost)
-	go sd.rxResponseServer(serverHost)
+	go sd.responseToServer(serverHost)
 }
 
 func (sd *SerialDevice) SetServerHost(serverHost string) {
@@ -70,6 +70,6 @@ func (sd *SerialDevice) GetTxWroteChannel() chan []byte {
 	return sd.getTxWroteChannel()
 }
 
-func (sd *SerialDevice) TxRequestServer(deviceHostPort string) {
-	go sd.txRequestServer(deviceHostPort)
+func (sd *SerialDevice) RequestFromServer(deviceHostPort string) {
+	go sd.requestFromServer(deviceHostPort)
 }

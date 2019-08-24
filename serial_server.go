@@ -36,8 +36,8 @@ func (ss *SerialServer) GetRxChannel() chan []byte {
 	return ss.rxChannel
 }
 
-func (ss *SerialServer) RxResponseServer(serverHostPort string) {
-	go ss.rxResponseServer(serverHostPort)
+func (ss *SerialServer) ResponseFromDevice(serverHostPort string) {
+	go ss.responseFromDevice(serverHostPort)
 }
 
 // Serial Tx
@@ -58,7 +58,7 @@ func (ss *SerialServer) TxRequestAndRxResponse(bytes []byte) []byte {
 	return ss.txRequestAndRxResponse(bytes)
 }
 
-func (ss *SerialServer) TxRequestServer(deviceHost string) {
+func (ss *SerialServer) RequestToDevice(deviceHost string) {
 	ss.SetDeviceHost(deviceHost)
-	go ss.txRequestServer(deviceHost)
+	go ss.requestToDevice(deviceHost)
 }
