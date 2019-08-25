@@ -13,7 +13,7 @@ type SerialDevice struct {
 	txChannel      chan []byte
 	txWroteChannel chan []byte
 	serverHost     string
-	deviceHostPort string
+	deviceAddr     string
 }
 
 type SerialDeviceConfig struct {
@@ -37,7 +37,7 @@ func NewSerialDevice() *SerialDevice {
 		txChannel:      nil,
 		txWroteChannel: nil,
 		serverHost:     "",
-		deviceHostPort: "",
+		deviceAddr:     "",
 	}
 }
 
@@ -70,6 +70,6 @@ func (sd *SerialDevice) GetTxWroteChannel() chan []byte {
 	return sd.getTxWroteChannel()
 }
 
-func (sd *SerialDevice) RequestFromServer(deviceHostPort string) {
-	go sd.requestFromServer(deviceHostPort)
+func (sd *SerialDevice) RequestFromServer(deviceAddr string) {
+	go sd.requestFromServer(deviceAddr)
 }

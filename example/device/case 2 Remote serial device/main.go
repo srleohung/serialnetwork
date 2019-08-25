@@ -16,7 +16,7 @@ var serialConfig serial.Config = serial.Config{
 	StopBits: serial.Stop1,
 }
 var serverHost string = "http://localhost:9876"
-var deviceHostPort string = ":9877"
+var deviceAddr string = ":9877"
 var rxLength int = 1
 
 func main() {
@@ -34,5 +34,9 @@ func main() {
 		please don't run this function.
 	*/
 	SerialDevice.ResponseToServer(serverHost)
-	SerialDevice.RequestFromServer(deviceHostPort)
+	SerialDevice.RequestFromServer(deviceAddr)
+
+	// ***** Run forever *****
+	forever := make(chan bool)
+	<-forever
 }

@@ -29,7 +29,7 @@ var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDe
 	RxLength:   1,
 	ServerHost: "http://localhost:9876",
 }
-var serverHostPost string = ":9876"
+var serverAddr string = ":9876"
 var deviceHost string = "http://localhost:9877"
 
 var rxChannel chan []byte
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	// ***** Start channel handler service *****
-	SerialServer.ResponseFromDevice(serverHostPost)
+	SerialServer.ResponseFromDevice(serverAddr)
 	SerialServer.RequestToDevice(deviceHost)
 
 	// ***** Test channel *****

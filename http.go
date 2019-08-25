@@ -77,14 +77,14 @@ func (sd *SerialDevice) responseToServer(serverHost string) {
 	}
 }
 
-func (sd *SerialDevice) requestFromServer(deviceHostPort string) {
-	sd.deviceHostPort = deviceHostPort
+func (sd *SerialDevice) requestFromServer(deviceAddr string) {
+	sd.deviceAddr = deviceAddr
 	sd.getTxWroteChannel()
 	http.HandleFunc(HTTP_SERIAL_INIT_PATH, sd.initAPI)
 	http.HandleFunc(HTTP_SERIAL_PING_PATH, sd.ping)
 	http.HandleFunc(HTTP_SERIAL_TX_PATH, sd.txRequest)
 	http.HandleFunc(HTTP_SERIAL_TX_RX_PATH, sd.txRequestAndRxResponse)
-	err := http.ListenAndServe(sd.deviceHostPort, nil)
+	err := http.ListenAndServe(sd.deviceAddr, nil)
 	httpLogger.IsErr(err)
 }
 
@@ -137,10 +137,10 @@ func (ss *SerialServer) initSerialDevice(serialDeviceConfig SerialDeviceConfig) 
 	}
 }
 
-func (ss *SerialServer) responseFromDevice(serverHostPort string) {
-	ss.serverHostPort = serverHostPort
+func (ss *SerialServer) responseFromDevice(serverAddr string) {
+	ss.serverAddr = serverAddr
 	http.HandleFunc(HTTP_SERIAL_RX_PATH, ss.rxResponse)
-	err := http.ListenAndServe(ss.serverHostPort, nil)
+	err := http.ListenAndServe(ss.serverAddr, nil)
 	httpLogger.IsErr(err)
 }
 

@@ -1,20 +1,20 @@
 package serialnetwork
 
 type SerialServer struct {
-	rxChannel      chan []byte
-	txChannel      chan []byte
-	startable      bool
-	serverHostPort string
-	deviceHost     string
+	rxChannel  chan []byte
+	txChannel  chan []byte
+	startable  bool
+	serverAddr string
+	deviceHost string
 }
 
 func NewSerialServer() *SerialServer {
 	return &SerialServer{
-		rxChannel:      nil,
-		txChannel:      nil,
-		serverHostPort: "",
-		deviceHost:     "",
-		startable:      false,
+		rxChannel:  nil,
+		txChannel:  nil,
+		serverAddr: "",
+		deviceHost: "",
+		startable:  false,
 	}
 }
 
@@ -36,8 +36,8 @@ func (ss *SerialServer) GetRxChannel() chan []byte {
 	return ss.rxChannel
 }
 
-func (ss *SerialServer) ResponseFromDevice(serverHostPort string) {
-	go ss.responseFromDevice(serverHostPort)
+func (ss *SerialServer) ResponseFromDevice(serverAddr string) {
+	go ss.responseFromDevice(serverAddr)
 }
 
 // Serial Tx

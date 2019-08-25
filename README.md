@@ -27,5 +27,13 @@ func main() {
 ```
 ## Server
 #### Please read examples of serial device and server.
-##### Serial device - https://github.com/srleohung/serialnetwork/example/device
-##### Serial server - https://github.com/srleohung/serialnetwork/example/server
+* Serial device examples - https://github.com/srleohung/serialnetwork/example/device
+* Serial server examples - https://github.com/srleohung/serialnetwork/example/server
+
+# Possible Future Work
+* Return error message and device connection status to server.
+* Use RWMutex to prevent error signals.
+* Upgrade device automatically reconnects.
+
+# Startup Reason
+This package is startup of a unmanned store projects. A host to controls many vending machine (e.g. Fuji, O2O, TCN, XY), camera, payment device (e.g. HK octopus, Alipay, WeChat Pay, QR code reader, rfid reader ...). This package is for many different devices connected to one server.
