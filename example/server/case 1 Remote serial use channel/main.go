@@ -8,11 +8,11 @@ import (
 var logger Logger = NewLogger("main")
 
 var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
-	Name:        "",
-	Baud:        9600,
-	ReadTimeout: 1000,
-	Size:        8,
-	Parity:      'N',
+	Name: "/dev/ttyUSB0",
+	Baud: 115200,
+	// ReadTimeout: 1000,
+	Size:   8,
+	Parity: serialnetwork.ParityNone,
 	/*
 		ParityNone  Parity = 'N'
 		ParityOdd   Parity = 'O'
@@ -20,7 +20,7 @@ var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDe
 		ParityMark  Parity = 'M' // parity bit is always 1
 		ParitySpace Parity = 'S' // parity bit is always 0
 	*/
-	StopBits: 1,
+	StopBits: serialnetwork.Stop1,
 	/*
 		Stop1     StopBits = 1
 		Stop1Half StopBits = 15
@@ -29,8 +29,9 @@ var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDe
 	RxLength:   1,
 	ServerHost: "http://localhost:9876",
 }
-var serverAddr string = ":9876"
-var deviceHost string = "http://localhost:9877"
+
+const ServerAddr string = ":9876"
+const DeviceHost string = "http://localhost:9877"
 
 var rxChannel chan []byte
 var txChannel chan []byte
@@ -58,8 +59,8 @@ func main() {
 	}
 
 	// ***** Start channel handler service *****
-	SerialServer.ResponseFromDevice(serverAddr)
-	SerialServer.RequestToDevice(deviceHost)
+	SerialServer.ResponseFromDevice(ServerAddr)
+	SerialServer.RequestToDevice(DeviceHost)
 
 	// ***** Test channel *****
 	txChannel <- message

@@ -27,6 +27,20 @@ type SerialDeviceConfig struct {
 	ServerHost  string
 }
 
+const (
+	Stop1     byte = 1
+	Stop1Half byte = 15
+	Stop2     byte = 2
+)
+
+const (
+	ParityNone  byte = 'N'
+	ParityOdd   byte = 'O'
+	ParityEven  byte = 'E'
+	ParityMark  byte = 'M' // parity bit is always 1
+	ParitySpace byte = 'S' // parity bit is always 0
+)
+
 func NewSerialDevice() *SerialDevice {
 	return &SerialDevice{
 		port:           nil,
@@ -41,8 +55,8 @@ func NewSerialDevice() *SerialDevice {
 	}
 }
 
-func (sd *SerialDevice) Init(serialConfig serial.Config, rxLength int) bool {
-	return sd.init(serialConfig, rxLength)
+func (sd *SerialDevice) Init(serialDeviceConfig SerialDeviceConfig) bool {
+	return sd.init(serialDeviceConfig)
 }
 
 // Serial Rx
@@ -53,7 +67,7 @@ func (sd *SerialDevice) GetRxChannel() chan []byte {
 
 func (sd *SerialDevice) ResponseToServer(serverHost string) {
 	sd.SetServerHost(serverHost)
-	go sd.responseToServer(serverHost)
+	go sd.responseToServer()
 }
 
 func (sd *SerialDevice) SetServerHost(serverHost string) {

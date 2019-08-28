@@ -3,21 +3,35 @@ package main
 import (
 	"github.com/srleohung/serialnetwork"
 	. "github.com/srleohung/serialnetwork/tools"
-	"github.com/tarm/serial"
+	"time"
 )
 
 var logger Logger = NewLogger("main")
 
-var serialConfig serial.Config = serial.Config{
-	Name:     "",
-	Baud:     9600,
-	Size:     8,
-	Parity:   serial.ParityNone,
-	StopBits: serial.Stop1,
+var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
+	Name: "/dev/ttyUSB0",
+	Baud: 115200,
+	// ReadTimeout: 1000,
+	Size:   8,
+	Parity: serialnetwork.ParityNone,
+	/*
+		ParityNone  Parity = 'N'
+		ParityOdd   Parity = 'O'
+		ParityEven  Parity = 'E'
+		ParityMark  Parity = 'M' // parity bit is always 1
+		ParitySpace Parity = 'S' // parity bit is always 0
+	*/
+	StopBits: serialnetwork.Stop1,
+	/*
+		Stop1     StopBits = 1
+		Stop1Half StopBits = 15
+		Stop2     StopBits = 2
+	*/
+	RxLength: 1,
+	// ServerHost: "",
 }
-var rxLength int = 1
 
-var message []byte = []byte("test")
+var message []byte = []byte("1")
 
 var rxChannel chan []byte
 var txChannel chan []byte
@@ -26,7 +40,7 @@ var txWroteChannel chan []byte
 func main() {
 	// ***** Init serial device *****
 	SerialDevice := serialnetwork.NewSerialDevice()
-	SerialDevice.Init(serialConfig, rxLength)
+	SerialDevice.Init(serialDeviceConfig)
 
 	// ***** Get channel *****
 	if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
@@ -45,8 +59,11 @@ func main() {
 
 	// ***** Test channel *****
 	go func() {
-		logger.Infof("rxChannel % x", <-rxChannel)
+		for {
+			txChannel <- message
+			logger.Infof("txWroteChannel % x", <-txWroteChannel)
+			time.Sleep(1 * time.Second)
+		}
 	}()
-	txChannel <- message
-	logger.Infof("txWroteChannel % x", <-txWroteChannel)
+	logger.Infof("rxChannel % x", <-rxChannel)
 }

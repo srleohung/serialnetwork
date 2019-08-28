@@ -60,5 +60,5 @@ func (ss *SerialServer) TxRequestAndRxResponse(bytes []byte) []byte {
 
 func (ss *SerialServer) RequestToDevice(deviceHost string) {
 	ss.SetDeviceHost(deviceHost)
-	go ss.requestToDevice(deviceHost)
+	go ss.requestToDevice()
 }

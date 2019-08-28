@@ -15,9 +15,35 @@ func (sd *SerialDevice) getTxWroteChannel() chan []byte {
 	return sd.txWroteChannel
 }
 
-func (sd *SerialDevice) init(serialConfig serial.Config, rxLength int) bool {
+func (sd *SerialDevice) init(serialDeviceConfig SerialDeviceConfig) bool {
+	if serialDeviceConfig.ServerHost != "" {
+		sd.serverHost = serialDeviceConfig.ServerHost
+	}
+	var serialConfig serial.Config
+	if serialDeviceConfig.Name != "" {
+		serialConfig.Name = serialDeviceConfig.Name
+	}
+	if serialDeviceConfig.Baud != 0 {
+		serialConfig.Baud = serialDeviceConfig.Baud
+	}
+	if serialDeviceConfig.ReadTimeout != 0 {
+		serialConfig.ReadTimeout = time.Duration(serialDeviceConfig.ReadTimeout) * time.Millisecond
+	}
+	if serialDeviceConfig.Size != 0 {
+		serialConfig.Size = serialDeviceConfig.Size
+	}
+	if serialDeviceConfig.Parity != 0 {
+		serialConfig.Parity = serial.Parity(serialDeviceConfig.Parity)
+	}
+	if serialDeviceConfig.StopBits != 0 {
+		serialConfig.StopBits = serial.StopBits(serialDeviceConfig.StopBits)
+	}
+	sd.serialConfig = &serialConfig
+	if serialDeviceConfig.RxLength == 0 {
+		serialDeviceConfig.RxLength = 1
+	}
 	sd.port = nil
-	sd.rxLength = rxLength
+	sd.rxLength = serialDeviceConfig.RxLength
 	sd.serialConfig = &serialConfig
 	sd.rxChannel = make(chan []byte)
 	sd.txChannel = make(chan []byte)

@@ -4,10 +4,8 @@ import (
 	. "bytes"
 	"encoding/json"
 	. "github.com/srleohung/serialnetwork/tools"
-	"github.com/tarm/serial"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 var httpLogger Logger = NewLogger("http")
@@ -28,33 +26,7 @@ func (sd *SerialDevice) initAPI(w http.ResponseWriter, r *http.Request) {
 	if config, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		var serialDeviceConfig SerialDeviceConfig
 		if err = json.Unmarshal(config, &serialDeviceConfig); !httpLogger.IsErr(err) {
-			if serialDeviceConfig.ServerHost != "" {
-				sd.serverHost = serialDeviceConfig.ServerHost
-			}
-			var serialConfig serial.Config
-			if serialDeviceConfig.Name != "" {
-				serialConfig.Name = serialDeviceConfig.Name
-			}
-			if serialDeviceConfig.Baud != 0 {
-				serialConfig.Baud = serialDeviceConfig.Baud
-			}
-			if serialDeviceConfig.ReadTimeout != 0 {
-				serialConfig.ReadTimeout = time.Duration(serialDeviceConfig.ReadTimeout) * time.Millisecond
-			}
-			if serialDeviceConfig.Size != 0 {
-				serialConfig.Size = serialDeviceConfig.Size
-			}
-			if serialDeviceConfig.Parity != 0 {
-				serialConfig.Parity = serial.Parity(serialDeviceConfig.Parity)
-			}
-			if serialDeviceConfig.StopBits != 0 {
-				serialConfig.StopBits = serial.StopBits(serialDeviceConfig.StopBits)
-			}
-			sd.serialConfig = &serialConfig
-			if serialDeviceConfig.RxLength == 0 {
-				serialDeviceConfig.RxLength = 1
-			}
-			if !sd.init(serialConfig, serialDeviceConfig.RxLength) {
+			if !sd.init(serialDeviceConfig) {
 				w.WriteHeader(http.StatusNotFound)
 			} else {
 				w.WriteHeader(http.StatusOK)
@@ -71,7 +43,7 @@ func (sd *SerialDevice) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (sd *SerialDevice) responseToServer(serverHost string) {
+func (sd *SerialDevice) responseToServer() {
 	for {
 		sd.rxResponse(<-sd.rxChannel)
 	}
@@ -144,7 +116,7 @@ func (ss *SerialServer) responseFromDevice(serverAddr string) {
 	httpLogger.IsErr(err)
 }
 
-func (ss *SerialServer) requestToDevice(deviceHost string) {
+func (ss *SerialServer) requestToDevice() {
 	for {
 		ss.txRequest(<-ss.txChannel)
 	}
