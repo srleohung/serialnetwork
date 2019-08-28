@@ -10,7 +10,7 @@ var logger Logger = NewLogger("main")
 var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
-	// ReadTimeout: 1000,
+	// ReadTimeout: 1000 * time.Millisecond,
 	Size:   8,
 	Parity: serialnetwork.ParityNone,
 	/*
@@ -26,7 +26,7 @@ var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDe
 		Stop1Half StopBits = 15
 		Stop2     StopBits = 2
 	*/
-	RxLength: 1,
+	RxBuffer: 1,
 	// ServerHost: "",
 }
 
@@ -38,9 +38,12 @@ func main() {
 	SerialDevice := serialnetwork.NewSerialDevice()
 	/*
 		You can call initialization from server api.
-		If you want, you don't need to run initialize(SerialDevice.Init(serialConfig, rxLength)).
+		If you want, you don't need to run initialize(SerialDevice.Init(serialConfig, rxBuffer)).
 	*/
-	SerialDevice.Init(serialDeviceConfig)
+	err := SerialDevice.Init(serialDeviceConfig)
+	if err != nil {
+		logger.Emerg(err)
+	}
 
 	// ***** Start channel handler service *****
 	/*

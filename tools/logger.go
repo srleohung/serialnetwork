@@ -26,7 +26,7 @@ var defaultLogLevel map[logLevel]bool = map[logLevel]bool{
 	EMERG:   true,
 	ALERT:   true,
 	CRIT:    true,
-	ERR:     true,
+	ERR:     false,
 	WARNING: true,
 	NOTICE:  true,
 	INFO:    true,

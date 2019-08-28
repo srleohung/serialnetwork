@@ -3,6 +3,7 @@ package serialnetwork
 import (
 	. "bytes"
 	"encoding/json"
+	"errors"
 	. "github.com/srleohung/serialnetwork/tools"
 	"io/ioutil"
 	"net/http"
@@ -26,13 +27,13 @@ func (sd *SerialDevice) initAPI(w http.ResponseWriter, r *http.Request) {
 	if config, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		var serialDeviceConfig SerialDeviceConfig
 		if err = json.Unmarshal(config, &serialDeviceConfig); !httpLogger.IsErr(err) {
-			if !sd.init(serialDeviceConfig) {
-				w.WriteHeader(http.StatusNotFound)
+			if httpLogger.IsErr(sd.init(serialDeviceConfig)) {
+				w.WriteHeader(http.StatusBadRequest)
 			} else {
 				w.WriteHeader(http.StatusOK)
 			}
 		} else {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusBadRequest)
 		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
@@ -51,7 +52,6 @@ func (sd *SerialDevice) responseToServer() {
 
 func (sd *SerialDevice) requestFromServer(deviceAddr string) {
 	sd.deviceAddr = deviceAddr
-	sd.getTxWroteChannel()
 	http.HandleFunc(HTTP_SERIAL_INIT_PATH, sd.initAPI)
 	http.HandleFunc(HTTP_SERIAL_PING_PATH, sd.ping)
 	http.HandleFunc(HTTP_SERIAL_TX_PATH, sd.txRequest)
@@ -69,7 +69,11 @@ func (sd *SerialDevice) txRequest(w http.ResponseWriter, r *http.Request) {
 	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		httpLogger.Debugf("% x", txRequest)
 		sd.txChannel <- txRequest
-		w.Write(<-sd.txWroteChannel)
+		if <-sd.txWroteChannel {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -79,8 +83,11 @@ func (sd *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Re
 	if txRequest, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		httpLogger.Debugf("% x", txRequest)
 		sd.txChannel <- txRequest
-		<-sd.txWroteChannel
-		w.Write(<-sd.rxChannel)
+		if <-sd.txWroteChannel {
+			w.Write(<-sd.rxChannel)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -88,24 +95,36 @@ func (sd *SerialDevice) txRequestAndRxResponse(w http.ResponseWriter, r *http.Re
 
 // Serial server
 
-func (ss *SerialServer) init() bool {
+func (ss *SerialServer) init() error {
 	ss.rxChannel = make(chan []byte)
 	ss.txChannel = make(chan []byte)
 	if !ss.startable {
 		ss.startable = true
 	}
-	return ss.startable
+	return nil
 }
 
 func (ss *SerialServer) ping() bool {
 	_, err := http.Get(ss.deviceHost + HTTP_SERIAL_PING_PATH)
-	return httpLogger.IsErr(err)
+	return !httpLogger.IsErr(err)
 }
 
-func (ss *SerialServer) initSerialDevice(serialDeviceConfig SerialDeviceConfig) {
-	if serialDeviceConfigJson, err := json.Marshal(serialDeviceConfig); !httpLogger.IsErr(err) {
-		_, err := http.Post(ss.deviceHost+HTTP_SERIAL_INIT_PATH, HTTP_CONTENT_JSON_TYPE, NewBuffer(serialDeviceConfigJson))
-		httpLogger.IsErr(err)
+func (ss *SerialServer) initSerialDevice(serialDeviceConfig SerialDeviceConfig) error {
+	bytes, err := json.Marshal(serialDeviceConfig)
+	if httpLogger.IsErr(err) {
+		return err
+	}
+	resp, err := http.Post(ss.deviceHost+HTTP_SERIAL_INIT_PATH, HTTP_CONTENT_JSON_TYPE, NewBuffer(bytes))
+	if httpLogger.IsErr(err) {
+		return errors.New("Unable to connect serial device")
+	}
+	switch resp.StatusCode {
+	case http.StatusBadRequest:
+		return errors.New("Unable to open serial port")
+	case http.StatusNotFound:
+		return errors.New("Unable to connect serial device")
+	default:
+		return nil
 	}
 }
 
@@ -131,15 +150,13 @@ func (ss *SerialServer) rxResponse(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (ss *SerialServer) txRequest(bytes []byte) []byte {
+func (ss *SerialServer) txRequest(bytes []byte) bool {
 	httpLogger.Info(ss.deviceHost)
-
-	txRequest, err := http.Post(ss.deviceHost+HTTP_SERIAL_TX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
-	httpLogger.IsErr(err)
-	defer txRequest.Body.Close()
-	tx, err := ioutil.ReadAll(txRequest.Body)
-	httpLogger.IsErr(err)
-	return tx
+	resp, err := http.Post(ss.deviceHost+HTTP_SERIAL_TX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
+	if httpLogger.IsErr(err) || resp.StatusCode != http.StatusOK {
+		return false
+	}
+	return true
 }
 
 func (ss *SerialServer) txRequestAndRxResponse(bytes []byte) []byte {

@@ -11,7 +11,7 @@ var logger Logger = NewLogger("main")
 var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
-	// ReadTimeout: 1000,
+	// ReadTimeout: 1000 * time.Millisecond,
 	Size:   8,
 	Parity: serialnetwork.ParityNone,
 	/*
@@ -27,7 +27,7 @@ var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDe
 		Stop1Half StopBits = 15
 		Stop2     StopBits = 2
 	*/
-	RxLength: 1,
+	RxBuffer: 1,
 	// ServerHost: "",
 }
 
@@ -35,12 +35,15 @@ var message []byte = []byte("1")
 
 var rxChannel chan []byte
 var txChannel chan []byte
-var txWroteChannel chan []byte
+var txWroteChannel chan bool
 
 func main() {
 	// ***** Init serial device *****
 	SerialDevice := serialnetwork.NewSerialDevice()
-	SerialDevice.Init(serialDeviceConfig)
+	err := SerialDevice.Init(serialDeviceConfig)
+	if err != nil {
+		logger.Emerg(err)
+	}
 
 	// ***** Get channel *****
 	if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
@@ -61,7 +64,11 @@ func main() {
 	go func() {
 		for {
 			txChannel <- message
-			logger.Infof("txWroteChannel % x", <-txWroteChannel)
+			if <-txWroteChannel {
+				logger.Info("The message was successfully written to the serial port.")
+			} else {
+				logger.Warning("The message failed to write to the serial port.")
+			}
 			time.Sleep(1 * time.Second)
 		}
 	}()

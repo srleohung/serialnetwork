@@ -2,6 +2,7 @@ package serialnetwork
 
 import (
 	"github.com/tarm/serial"
+	"time"
 )
 
 type SerialDevice struct {
@@ -9,9 +10,9 @@ type SerialDevice struct {
 	serialConfig   *serial.Config
 	startable      bool
 	rxChannel      chan []byte
-	rxLength       int
+	rxBuffer       int
 	txChannel      chan []byte
-	txWroteChannel chan []byte
+	txWroteChannel chan bool
 	serverHost     string
 	deviceAddr     string
 }
@@ -19,11 +20,11 @@ type SerialDevice struct {
 type SerialDeviceConfig struct {
 	Name        string
 	Baud        int
-	ReadTimeout int
+	ReadTimeout time.Duration
 	Size        byte
 	Parity      byte
 	StopBits    byte
-	RxLength    int
+	RxBuffer    int
 	ServerHost  string
 }
 
@@ -47,7 +48,7 @@ func NewSerialDevice() *SerialDevice {
 		serialConfig:   nil,
 		startable:      false,
 		rxChannel:      nil,
-		rxLength:       1,
+		rxBuffer:       1,
 		txChannel:      nil,
 		txWroteChannel: nil,
 		serverHost:     "",
@@ -55,7 +56,7 @@ func NewSerialDevice() *SerialDevice {
 	}
 }
 
-func (sd *SerialDevice) Init(serialDeviceConfig SerialDeviceConfig) bool {
+func (sd *SerialDevice) Init(serialDeviceConfig SerialDeviceConfig) error {
 	return sd.init(serialDeviceConfig)
 }
 
@@ -80,10 +81,18 @@ func (sd *SerialDevice) GetTxChannel() chan []byte {
 	return sd.txChannel
 }
 
-func (sd *SerialDevice) GetTxWroteChannel() chan []byte {
-	return sd.getTxWroteChannel()
+func (sd *SerialDevice) GetTxWroteChannel() chan bool {
+	return sd.txWroteChannel
 }
 
 func (sd *SerialDevice) RequestFromServer(deviceAddr string) {
 	go sd.requestFromServer(deviceAddr)
+}
+
+func (sd *SerialDevice) OpenPort() bool {
+	return sd.openPort()
+}
+
+func (sd *SerialDevice) ClosePort() bool {
+	return sd.closePort()
 }

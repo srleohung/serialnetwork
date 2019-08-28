@@ -18,7 +18,7 @@ func NewSerialServer() *SerialServer {
 	}
 }
 
-func (ss *SerialServer) Init() bool {
+func (ss *SerialServer) Init() error {
 	return ss.init()
 }
 
@@ -26,8 +26,8 @@ func (ss *SerialServer) Ping() bool {
 	return ss.ping()
 }
 
-func (ss *SerialServer) InitSerialDevice(serialDeviceConfig SerialDeviceConfig) {
-	ss.initSerialDevice(serialDeviceConfig)
+func (ss *SerialServer) InitSerialDevice(serialDeviceConfig SerialDeviceConfig) error {
+	return ss.initSerialDevice(serialDeviceConfig)
 }
 
 // Serial Rx
@@ -50,7 +50,7 @@ func (ss *SerialServer) SetDeviceHost(deviceHost string) {
 	ss.deviceHost = deviceHost
 }
 
-func (ss *SerialServer) TxRequest(bytes []byte) []byte {
+func (ss *SerialServer) TxRequest(bytes []byte) bool {
 	return ss.txRequest(bytes)
 }
 

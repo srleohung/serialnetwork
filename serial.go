@@ -8,96 +8,89 @@ import (
 
 var serialLogger Logger = NewLogger("serial")
 
-func (sd *SerialDevice) getTxWroteChannel() chan []byte {
-	if sd.txWroteChannel == nil {
-		sd.txWroteChannel = make(chan []byte)
+func (sd *SerialDevice) init(serialDeviceConfig SerialDeviceConfig) error {
+	sd.rxChannel = make(chan []byte)
+	sd.txChannel = make(chan []byte)
+	sd.txWroteChannel = make(chan bool, 1)
+	if serialDeviceConfig.RxBuffer > 0 {
+		sd.rxBuffer = serialDeviceConfig.RxBuffer
 	}
-	return sd.txWroteChannel
-}
-
-func (sd *SerialDevice) init(serialDeviceConfig SerialDeviceConfig) bool {
 	if serialDeviceConfig.ServerHost != "" {
 		sd.serverHost = serialDeviceConfig.ServerHost
 	}
-	var serialConfig serial.Config
-	if serialDeviceConfig.Name != "" {
-		serialConfig.Name = serialDeviceConfig.Name
-	}
-	if serialDeviceConfig.Baud != 0 {
-		serialConfig.Baud = serialDeviceConfig.Baud
-	}
-	if serialDeviceConfig.ReadTimeout != 0 {
-		serialConfig.ReadTimeout = time.Duration(serialDeviceConfig.ReadTimeout) * time.Millisecond
-	}
-	if serialDeviceConfig.Size != 0 {
-		serialConfig.Size = serialDeviceConfig.Size
-	}
-	if serialDeviceConfig.Parity != 0 {
-		serialConfig.Parity = serial.Parity(serialDeviceConfig.Parity)
-	}
-	if serialDeviceConfig.StopBits != 0 {
-		serialConfig.StopBits = serial.StopBits(serialDeviceConfig.StopBits)
+	var serialConfig serial.Config = serial.Config{
+		Name:        serialDeviceConfig.Name,
+		Baud:        serialDeviceConfig.Baud,
+		ReadTimeout: serialDeviceConfig.ReadTimeout,
+		Size:        serialDeviceConfig.Size,
+		Parity:      serial.Parity(serialDeviceConfig.Parity),
+		StopBits:    serial.StopBits(serialDeviceConfig.StopBits),
 	}
 	sd.serialConfig = &serialConfig
-	if serialDeviceConfig.RxLength == 0 {
-		serialDeviceConfig.RxLength = 1
-	}
-	sd.port = nil
-	sd.rxLength = serialDeviceConfig.RxLength
 	sd.serialConfig = &serialConfig
-	sd.rxChannel = make(chan []byte)
-	sd.txChannel = make(chan []byte)
 	if port, err := serial.OpenPort(&serialConfig); !serialLogger.IsErr(err) {
 		sd.port = port
+	} else {
+		return err
 	}
 	if !sd.startable {
 		go sd.serialRX()
 		go sd.serialTX()
 		sd.startable = true
 	}
-	return sd.startable
+	return nil
 }
 
 func (sd *SerialDevice) serialRX() {
 	for {
-		bytes := make([]byte, sd.rxLength)
-		if _, err := sd.port.Read(bytes); serialLogger.IsErr(err) {
-			err = sd.port.Close()
-			serialLogger.IsErr(err)
-			sd.port = nil
-		}
-		select {
-		case sd.rxChannel <- bytes:
-		case <-time.After(time.Second):
+		if !sd.openPort() {
 			continue
 		}
+		bytes := make([]byte, sd.rxBuffer)
+		if _, err := sd.port.Read(bytes); serialLogger.IsErr(err) {
+			sd.closePort()
+		}
+		sd.rxChannel <- bytes
+		serialLogger.Debugf("% x", bytes)
 	}
 }
 
 func (sd *SerialDevice) serialTX() {
 	for {
-		if sd.port == nil {
-			if port, err := serial.OpenPort(sd.serialConfig); serialLogger.IsErr(err) {
-				time.Sleep(time.Second)
-				continue
-			} else {
-				sd.port = port
-			}
-		}
-		select {
-		case bytes := <-sd.txChannel:
-			serialLogger.Debugf("% x", bytes)
-			if _, err := sd.port.Write(bytes); serialLogger.IsErr(err) {
-				err = sd.port.Close()
-				serialLogger.IsErr(err)
-				sd.port = nil
-				continue
-			}
-			if sd.txWroteChannel != nil {
-				sd.txWroteChannel <- bytes
-			}
-		case <-time.After(time.Second):
+		if !sd.openPort() {
 			continue
 		}
+		bytes := <-sd.txChannel
+		serialLogger.Debugf("% x", bytes)
+		if len(sd.txWroteChannel) > 0 {
+			<-sd.txWroteChannel
+		}
+		if n, err := sd.port.Write(bytes); serialLogger.IsErr(err) || n != len(bytes) {
+			sd.closePort()
+			sd.txWroteChannel <- false
+		} else {
+			sd.txWroteChannel <- true
+		}
 	}
+}
+
+func (sd *SerialDevice) openPort() bool {
+	if sd.port == nil {
+		port, err := serial.OpenPort(sd.serialConfig)
+		if serialLogger.IsErr(err) {
+			time.Sleep(time.Second)
+			return false
+		}
+		sd.port = port
+	}
+	return true
+}
+
+func (sd *SerialDevice) closePort() bool {
+	if sd.port != nil {
+		err := sd.port.Close()
+		sd.port = nil
+		return !serialLogger.IsErr(err)
+	}
+	return true
 }
