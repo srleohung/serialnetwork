@@ -8,23 +8,23 @@ import (
 
 var serialLogger Logger = NewLogger("serial")
 
-func (sd *SerialDevice) init(serialDeviceConfig SerialDeviceConfig) error {
+func (sd *Device) init(config Config) error {
 	sd.rxChannel = make(chan []byte)
 	sd.txChannel = make(chan []byte)
 	sd.txWroteChannel = make(chan bool, 1)
-	if serialDeviceConfig.RxBuffer > 0 {
-		sd.rxBuffer = serialDeviceConfig.RxBuffer
+	if config.RxBuffer > 0 {
+		sd.rxBuffer = config.RxBuffer
 	}
-	if serialDeviceConfig.ServerHost != "" {
-		sd.serverHost = serialDeviceConfig.ServerHost
+	if config.ServerHost != "" {
+		sd.serverHost = config.ServerHost
 	}
 	var serialConfig serial.Config = serial.Config{
-		Name:        serialDeviceConfig.Name,
-		Baud:        serialDeviceConfig.Baud,
-		ReadTimeout: serialDeviceConfig.ReadTimeout,
-		Size:        serialDeviceConfig.Size,
-		Parity:      serial.Parity(serialDeviceConfig.Parity),
-		StopBits:    serial.StopBits(serialDeviceConfig.StopBits),
+		Name:        config.Name,
+		Baud:        config.Baud,
+		ReadTimeout: config.ReadTimeout,
+		Size:        config.Size,
+		Parity:      serial.Parity(config.Parity),
+		StopBits:    serial.StopBits(config.StopBits),
 	}
 	sd.serialConfig = &serialConfig
 	sd.serialConfig = &serialConfig
@@ -41,7 +41,7 @@ func (sd *SerialDevice) init(serialDeviceConfig SerialDeviceConfig) error {
 	return nil
 }
 
-func (sd *SerialDevice) serialRX() {
+func (sd *Device) serialRX() {
 	for {
 		if !sd.openPort() {
 			continue
@@ -55,7 +55,7 @@ func (sd *SerialDevice) serialRX() {
 	}
 }
 
-func (sd *SerialDevice) serialTX() {
+func (sd *Device) serialTX() {
 	for {
 		if !sd.openPort() {
 			continue
@@ -74,7 +74,7 @@ func (sd *SerialDevice) serialTX() {
 	}
 }
 
-func (sd *SerialDevice) openPort() bool {
+func (sd *Device) openPort() bool {
 	if sd.port == nil {
 		port, err := serial.OpenPort(sd.serialConfig)
 		if serialLogger.IsErr(err) {
@@ -86,7 +86,7 @@ func (sd *SerialDevice) openPort() bool {
 	return true
 }
 
-func (sd *SerialDevice) closePort() bool {
+func (sd *Device) closePort() bool {
 	if sd.port != nil {
 		err := sd.port.Close()
 		sd.port = nil

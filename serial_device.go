@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type SerialDevice struct {
+type Device struct {
 	port           *serial.Port
 	serialConfig   *serial.Config
 	startable      bool
@@ -17,7 +17,7 @@ type SerialDevice struct {
 	deviceAddr     string
 }
 
-type SerialDeviceConfig struct {
+type Config struct {
 	Name        string
 	Baud        int
 	ReadTimeout time.Duration
@@ -42,8 +42,8 @@ const (
 	ParitySpace byte = 'S' // parity bit is always 0
 )
 
-func NewSerialDevice() *SerialDevice {
-	return &SerialDevice{
+func NewDevice() *Device {
+	return &Device{
 		port:           nil,
 		serialConfig:   nil,
 		startable:      false,
@@ -56,43 +56,43 @@ func NewSerialDevice() *SerialDevice {
 	}
 }
 
-func (sd *SerialDevice) Init(serialDeviceConfig SerialDeviceConfig) error {
-	return sd.init(serialDeviceConfig)
+func (sd *Device) Init(config Config) error {
+	return sd.init(config)
 }
 
 // Serial Rx
 
-func (sd *SerialDevice) GetRxChannel() chan []byte {
+func (sd *Device) GetRxChannel() chan []byte {
 	return sd.rxChannel
 }
 
-func (sd *SerialDevice) ResponseToServer(serverHost string) {
+func (sd *Device) ResponseToServer(serverHost string) {
 	sd.SetServerHost(serverHost)
 	go sd.responseToServer()
 }
 
-func (sd *SerialDevice) SetServerHost(serverHost string) {
+func (sd *Device) SetServerHost(serverHost string) {
 	sd.serverHost = serverHost
 }
 
 // Serial Tx
 
-func (sd *SerialDevice) GetTxChannel() chan []byte {
+func (sd *Device) GetTxChannel() chan []byte {
 	return sd.txChannel
 }
 
-func (sd *SerialDevice) GetTxWroteChannel() chan bool {
+func (sd *Device) GetTxWroteChannel() chan bool {
 	return sd.txWroteChannel
 }
 
-func (sd *SerialDevice) RequestFromServer(deviceAddr string) {
+func (sd *Device) RequestFromServer(deviceAddr string) {
 	go sd.requestFromServer(deviceAddr)
 }
 
-func (sd *SerialDevice) OpenPort() bool {
+func (sd *Device) OpenPort() bool {
 	return sd.openPort()
 }
 
-func (sd *SerialDevice) ClosePort() bool {
+func (sd *Device) ClosePort() bool {
 	return sd.closePort()
 }

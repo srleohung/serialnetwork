@@ -7,7 +7,7 @@ import (
 
 var logger Logger = NewLogger("main")
 
-var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
+var config serialnetwork.Config = serialnetwork.Config{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
 	// ReadTimeout: 1000 * time.Millisecond,
@@ -35,12 +35,12 @@ const DeviceAddr string = ":9877"
 
 func main() {
 	// ***** Init serial device *****
-	SerialDevice := serialnetwork.NewSerialDevice()
+	Device := serialnetwork.NewDevice()
 	/*
 		You can call initialization from server api.
-		If you want, you don't need to run initialize(SerialDevice.Init(serialConfig, rxBuffer)).
+		If you want, you don't need to run initialize(Device.Init(serialConfig, rxBuffer)).
 	*/
-	err := SerialDevice.Init(serialDeviceConfig)
+	err := Device.Init(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
@@ -50,8 +50,8 @@ func main() {
 		If you use api calls to control and you don't need to automatic response,
 		please don't run this function.
 	*/
-	SerialDevice.ResponseToServer(ServerHost)
-	SerialDevice.RequestFromServer(DeviceAddr)
+	Device.ResponseToServer(ServerHost)
+	Device.RequestFromServer(DeviceAddr)
 
 	// ***** Run forever *****
 	forever := make(chan bool)

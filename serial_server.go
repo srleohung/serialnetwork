@@ -1,6 +1,6 @@
 package serialnetwork
 
-type SerialServer struct {
+type Server struct {
 	rxChannel  chan []byte
 	txChannel  chan []byte
 	startable  bool
@@ -8,8 +8,8 @@ type SerialServer struct {
 	deviceHost string
 }
 
-func NewSerialServer() *SerialServer {
-	return &SerialServer{
+func NewServer() *Server {
+	return &Server{
 		rxChannel:  nil,
 		txChannel:  nil,
 		serverAddr: "",
@@ -18,47 +18,47 @@ func NewSerialServer() *SerialServer {
 	}
 }
 
-func (ss *SerialServer) Init() error {
+func (ss *Server) Init() error {
 	return ss.init()
 }
 
-func (ss *SerialServer) Ping() bool {
+func (ss *Server) Ping() bool {
 	return ss.ping()
 }
 
-func (ss *SerialServer) InitSerialDevice(serialDeviceConfig SerialDeviceConfig) error {
-	return ss.initSerialDevice(serialDeviceConfig)
+func (ss *Server) InitDevice(config Config) error {
+	return ss.initDevice(config)
 }
 
 // Serial Rx
 
-func (ss *SerialServer) GetRxChannel() chan []byte {
+func (ss *Server) GetRxChannel() chan []byte {
 	return ss.rxChannel
 }
 
-func (ss *SerialServer) ResponseFromDevice(serverAddr string) {
+func (ss *Server) ResponseFromDevice(serverAddr string) {
 	go ss.responseFromDevice(serverAddr)
 }
 
 // Serial Tx
 
-func (ss *SerialServer) GetTxChannel() chan []byte {
+func (ss *Server) GetTxChannel() chan []byte {
 	return ss.txChannel
 }
 
-func (ss *SerialServer) SetDeviceHost(deviceHost string) {
+func (ss *Server) SetDeviceHost(deviceHost string) {
 	ss.deviceHost = deviceHost
 }
 
-func (ss *SerialServer) TxRequest(bytes []byte) bool {
+func (ss *Server) TxRequest(bytes []byte) bool {
 	return ss.txRequest(bytes)
 }
 
-func (ss *SerialServer) TxRequestAndRxResponse(bytes []byte) []byte {
+func (ss *Server) TxRequestAndRxResponse(bytes []byte) []byte {
 	return ss.txRequestAndRxResponse(bytes)
 }
 
-func (ss *SerialServer) RequestToDevice(deviceHost string) {
+func (ss *Server) RequestToDevice(deviceHost string) {
 	ss.SetDeviceHost(deviceHost)
 	go ss.requestToDevice()
 }

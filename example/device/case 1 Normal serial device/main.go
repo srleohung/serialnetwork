@@ -8,7 +8,7 @@ import (
 
 var logger Logger = NewLogger("main")
 
-var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
+var config serialnetwork.Config = serialnetwork.Config{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
 	// ReadTimeout: 1000 * time.Millisecond,
@@ -39,24 +39,24 @@ var txWroteChannel chan bool
 
 func main() {
 	// ***** Init serial device *****
-	SerialDevice := serialnetwork.NewSerialDevice()
-	err := SerialDevice.Init(serialDeviceConfig)
+	Device := serialnetwork.NewDevice()
+	err := Device.Init(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
 
 	// ***** Get channel *****
-	if rxChannel = SerialDevice.GetRxChannel(); rxChannel != nil {
+	if rxChannel = Device.GetRxChannel(); rxChannel != nil {
 		logger.Info("Got RxChannel")
 	}
-	if txChannel = SerialDevice.GetTxChannel(); txChannel != nil {
+	if txChannel = Device.GetTxChannel(); txChannel != nil {
 		logger.Info("Got TxChannel")
 	}
 	/*
 		If you want to check your tx message have been sent,
 		you can use Tx wrote channel and listen to it.
 	*/
-	if txWroteChannel = SerialDevice.GetTxWroteChannel(); txWroteChannel != nil {
+	if txWroteChannel = Device.GetTxWroteChannel(); txWroteChannel != nil {
 		logger.Info("Got TxWroteChannel")
 	}
 

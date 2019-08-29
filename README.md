@@ -15,11 +15,11 @@ import (
 )
 
 func main() {
-	SerialDevice := serialnetwork.NewSerialDevice()
-	SerialDevice.Init(&serial.Config{Name: "/dev/ttyUSB0", Baud: 9600}, 1)
+	Device := serialnetwork.NewDevice()
+	Device.Init(&serial.Config{Name: "/dev/ttyUSB0", Baud: 9600}, 1)
 
-	rxChannel = SerialDevice.GetRxChannel()
-	txChannel = SerialDevice.GetTxChannel()
+	rxChannel = Device.GetRxChannel()
+	txChannel = Device.GetTxChannel()
 
 	txChannel <- []byte("test")
 	log.Printf("% x", <-rxChannel)

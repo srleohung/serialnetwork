@@ -8,7 +8,7 @@ import (
 
 var logger Logger = NewLogger("main")
 
-var serialDeviceConfig serialnetwork.SerialDeviceConfig = serialnetwork.SerialDeviceConfig{
+var config serialnetwork.Config = serialnetwork.Config{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
 	// ReadTimeout: 1000 * time.Millisecond,
@@ -37,16 +37,16 @@ var message []byte = []byte("test")
 
 func main() {
 	// ***** Init service *****
-	SerialServer := serialnetwork.NewSerialServer()
-	err := SerialServer.Init()
+	Server := serialnetwork.NewServer()
+	err := Server.Init()
 	if err != nil {
 		logger.Emerg(err)
 	}
-	SerialServer.SetDeviceHost(DeviceHost)
+	Server.SetDeviceHost(DeviceHost)
 
 	// ***** Test Connection *****
 	for {
-		if SerialServer.Ping() {
+		if Server.Ping() {
 			logger.Warning("The server is connecting to the device.")
 			break
 		} else {
@@ -58,14 +58,14 @@ func main() {
 	// ***** Init serial device *****
 	/*
 		You can call initialization from server api.
-		If you don't want, you don't need to run initialize(SerialServer.InitSerialDevice(serialDeviceConfig)).
+		If you don't want, you don't need to run initialize(Server.InitDevice(config)).
 	*/
-	err = SerialServer.InitSerialDevice(serialDeviceConfig)
+	err = Server.InitDevice(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
 
 	// ***** Test service *****
-	logger.Infof("TxRequest % x", SerialServer.TxRequest(message))
-	logger.Infof("TxRequestAndRxResponse % x", SerialServer.TxRequestAndRxResponse(message))
+	logger.Infof("TxRequest % x", Server.TxRequest(message))
+	logger.Infof("TxRequestAndRxResponse % x", Server.TxRequestAndRxResponse(message))
 }
