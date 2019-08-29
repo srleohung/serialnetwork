@@ -17,7 +17,7 @@ const (
 	HTTP_SERIAL_RX_PATH    string = "/serialnetwork/serial/rx"
 	HTTP_SERIAL_TX_PATH    string = "/serialnetwork/serial/tx"
 	HTTP_SERIAL_TX_RX_PATH string = "/serialnetwork/serial/tx/rx"
-	HTTP_CONTENT_TYPE      string = ""
+	HTTP_CONTENT_TYPE      string = "application/octet-stream"
 	HTTP_CONTENT_JSON_TYPE string = "application/json"
 )
 
