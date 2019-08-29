@@ -43,7 +43,7 @@ var rxFormat []serialnetwork.RxFormat = []serialnetwork.RxFormat{
 	// Format 2
 	{
 		StartByte: []byte{0x011},
-		// EndByte:           []byte{0x9},
+		// EndByte:           []byte{0x09},
 		LengthByteIndex:   1,
 		LengthByteMissing: 7,
 		// LengthFixed:       9,
