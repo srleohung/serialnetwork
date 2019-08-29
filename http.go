@@ -47,6 +47,7 @@ func (d *Device) ping(w http.ResponseWriter, r *http.Request) {
 func (d *Device) responseToServer() {
 	for {
 		d.rxResponse(<-d.rxChannel)
+		<-time.After(10 * time.Millisecond)
 	}
 }
 
@@ -138,6 +139,7 @@ func (s *Server) responseFromDevice(serverAddr string) {
 func (s *Server) requestToDevice() {
 	for {
 		s.txRequest(<-s.txChannel)
+		<-time.After(10 * time.Millisecond)
 	}
 }
 
