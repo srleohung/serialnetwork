@@ -23,7 +23,7 @@ const (
 
 // Serial device
 
-func (d *Device) initAPI(w http.ResponseWriter, r *http.Request) {
+func (d *Device) initDevice(w http.ResponseWriter, r *http.Request) {
 	if body, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		var config Config
 		if err = json.Unmarshal(body, &config); !httpLogger.IsErr(err) {
@@ -52,7 +52,7 @@ func (d *Device) responseToServer() {
 
 func (d *Device) requestFromServer(deviceAddr string) {
 	d.deviceAddr = deviceAddr
-	http.HandleFunc(HTTP_SERIAL_INIT_PATH, d.initAPI)
+	http.HandleFunc(HTTP_SERIAL_INIT_PATH, d.initDevice)
 	http.HandleFunc(HTTP_SERIAL_PING_PATH, d.ping)
 	http.HandleFunc(HTTP_SERIAL_TX_PATH, d.txRequest)
 	http.HandleFunc(HTTP_SERIAL_TX_RX_PATH, d.txRequestAndRxResponse)

@@ -9,6 +9,10 @@ import (
 var serialLogger Logger = NewLogger("serial")
 
 func (d *Device) init(config Config) error {
+	d.port = nil
+	d.rxChannel = nil
+	d.txChannel = nil
+	d.txWroteChannel = nil
 	d.rxChannel = make(chan []byte)
 	d.txChannel = make(chan []byte)
 	d.txWroteChannel = make(chan bool, 1)
@@ -35,6 +39,7 @@ func (d *Device) init(config Config) error {
 	if !d.startable {
 		go d.serialRX()
 		go d.serialTX()
+		serialLogger.Debug("Start running serialRX and serialTX.")
 		d.startable = true
 	}
 	return nil
@@ -66,6 +71,8 @@ func (d *Device) serialRX() {
 			}
 		}
 	}
+	d.startable = false
+	serialLogger.Debug("Unable to run serialRX.")
 }
 
 func (d *Device) serialTX() {
@@ -85,6 +92,8 @@ func (d *Device) serialTX() {
 			d.txWroteChannel <- true
 		}
 	}
+	d.startable = false
+	serialLogger.Debug("Unable to run serialTX.")
 }
 
 func (d *Device) openPort() bool {

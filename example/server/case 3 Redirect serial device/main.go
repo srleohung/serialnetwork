@@ -154,10 +154,10 @@ func main() {
 	go func(from chan []byte, to chan []byte) {
 		for {
 			bytes := <-from
-			logger.Infof("tx2->rx1 % x", bytes)
+			logger.Infof("rx1->tx2 % x", bytes)
 			to <- bytes
 		}
-	}(tx2, rx1)
+	}(rx1, tx2)
 	for {
 		bytes := <-rx2
 		logger.Infof("rx2->tx1 % x", bytes)
