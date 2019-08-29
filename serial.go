@@ -159,7 +159,7 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 			}
 		}
 		d.rxFormatter.number++
-		if d.rxFormatter.number >= d.rxFormatter.length {
+		if d.rxFormatter.length != 0 && d.rxFormatter.number >= d.rxFormatter.length {
 			d.rxFormatter.number = 0
 			d.rxFormatter.numberOfEnd = 0
 			d.rxFormatter.formatterNumber = 0
