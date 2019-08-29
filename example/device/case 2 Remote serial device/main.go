@@ -35,12 +35,12 @@ const DeviceAddr string = ":9877"
 
 func main() {
 	// ***** Init serial device *****
-	Device := serialnetwork.NewDevice()
+	d := serialnetwork.NewDevice()
 	/*
 		You can call initialization from server api.
-		If you want, you don't need to run initialize(Device.Init(serialConfig, rxBuffer)).
+		If you want, you don't need to run initialize(d.Init(serialConfig, rxBuffer)).
 	*/
-	err := Device.Init(config)
+	err := d.Init(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
@@ -50,8 +50,8 @@ func main() {
 		If you use api calls to control and you don't need to automatic response,
 		please don't run this function.
 	*/
-	Device.ResponseToServer(ServerHost)
-	Device.RequestFromServer(DeviceAddr)
+	d.ResponseToServer(ServerHost)
+	d.RequestFromServer(DeviceAddr)
 
 	// ***** Run forever *****
 	forever := make(chan bool)

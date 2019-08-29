@@ -37,16 +37,16 @@ var message []byte = []byte("test")
 
 func main() {
 	// ***** Init service *****
-	Server := serialnetwork.NewServer()
-	err := Server.Init()
+	s := serialnetwork.NewServer()
+	err := s.Init()
 	if err != nil {
 		logger.Emerg(err)
 	}
-	Server.SetDeviceHost(DeviceHost)
+	s.SetDeviceHost(DeviceHost)
 
 	// ***** Test Connection *****
 	for {
-		if Server.Ping() {
+		if s.Ping() {
 			logger.Warning("The server is connecting to the device.")
 			break
 		} else {
@@ -58,14 +58,14 @@ func main() {
 	// ***** Init serial device *****
 	/*
 		You can call initialization from server api.
-		If you don't want, you don't need to run initialize(Server.InitDevice(config)).
+		If you don't want, you don't need to run initialize(s.InitDevice(config)).
 	*/
-	err = Server.InitDevice(config)
+	err = s.InitDevice(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
 
 	// ***** Test service *****
-	logger.Infof("TxRequest % x", Server.TxRequest(message))
-	logger.Infof("TxRequestAndRxResponse % x", Server.TxRequestAndRxResponse(message))
+	logger.Infof("TxRequest % x", s.TxRequest(message))
+	logger.Infof("TxRequestAndRxResponse % x", s.TxRequestAndRxResponse(message))
 }

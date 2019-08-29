@@ -18,47 +18,47 @@ func NewServer() *Server {
 	}
 }
 
-func (ss *Server) Init() error {
-	return ss.init()
+func (s *Server) Init() error {
+	return s.init()
 }
 
-func (ss *Server) Ping() bool {
-	return ss.ping()
+func (s *Server) Ping() bool {
+	return s.ping()
 }
 
-func (ss *Server) InitDevice(config Config) error {
-	return ss.initDevice(config)
+func (s *Server) InitDevice(config Config) error {
+	return s.initDevice(config)
 }
 
 // Serial Rx
 
-func (ss *Server) GetRxChannel() chan []byte {
-	return ss.rxChannel
+func (s *Server) GetRxChannel() chan []byte {
+	return s.rxChannel
 }
 
-func (ss *Server) ResponseFromDevice(serverAddr string) {
-	go ss.responseFromDevice(serverAddr)
+func (s *Server) ResponseFromDevice(serverAddr string) {
+	go s.responseFromDevice(serverAddr)
 }
 
 // Serial Tx
 
-func (ss *Server) GetTxChannel() chan []byte {
-	return ss.txChannel
+func (s *Server) GetTxChannel() chan []byte {
+	return s.txChannel
 }
 
-func (ss *Server) SetDeviceHost(deviceHost string) {
-	ss.deviceHost = deviceHost
+func (s *Server) SetDeviceHost(deviceHost string) {
+	s.deviceHost = deviceHost
 }
 
-func (ss *Server) TxRequest(bytes []byte) bool {
-	return ss.txRequest(bytes)
+func (s *Server) TxRequest(bytes []byte) bool {
+	return s.txRequest(bytes)
 }
 
-func (ss *Server) TxRequestAndRxResponse(bytes []byte) []byte {
-	return ss.txRequestAndRxResponse(bytes)
+func (s *Server) TxRequestAndRxResponse(bytes []byte) []byte {
+	return s.txRequestAndRxResponse(bytes)
 }
 
-func (ss *Server) RequestToDevice(deviceHost string) {
-	ss.SetDeviceHost(deviceHost)
-	go ss.requestToDevice()
+func (s *Server) RequestToDevice(deviceHost string) {
+	s.SetDeviceHost(deviceHost)
+	go s.requestToDevice()
 }

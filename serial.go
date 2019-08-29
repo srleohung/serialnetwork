@@ -8,15 +8,15 @@ import (
 
 var serialLogger Logger = NewLogger("serial")
 
-func (sd *Device) init(config Config) error {
-	sd.rxChannel = make(chan []byte)
-	sd.txChannel = make(chan []byte)
-	sd.txWroteChannel = make(chan bool, 1)
+func (d *Device) init(config Config) error {
+	d.rxChannel = make(chan []byte)
+	d.txChannel = make(chan []byte)
+	d.txWroteChannel = make(chan bool, 1)
 	if config.RxBuffer > 0 {
-		sd.rxBuffer = config.RxBuffer
+		d.rxBuffer = config.RxBuffer
 	}
 	if config.ServerHost != "" {
-		sd.serverHost = config.ServerHost
+		d.serverHost = config.ServerHost
 	}
 	var serialConfig serial.Config = serial.Config{
 		Name:        config.Name,
@@ -26,71 +26,162 @@ func (sd *Device) init(config Config) error {
 		Parity:      serial.Parity(config.Parity),
 		StopBits:    serial.StopBits(config.StopBits),
 	}
-	sd.serialConfig = &serialConfig
-	sd.serialConfig = &serialConfig
+	d.serialConfig = &serialConfig
 	if port, err := serial.OpenPort(&serialConfig); !serialLogger.IsErr(err) {
-		sd.port = port
+		d.port = port
 	} else {
 		return err
 	}
-	if !sd.startable {
-		go sd.serialRX()
-		go sd.serialTX()
-		sd.startable = true
+	if !d.startable {
+		go d.serialRX()
+		go d.serialTX()
+		d.startable = true
 	}
 	return nil
 }
 
-func (sd *Device) serialRX() {
+func (d *Device) serialRX() {
+	var bytes []byte
+	var aByte []byte
+	var buffer []byte
 	for {
-		if !sd.openPort() {
+		if !d.openPort() {
 			continue
 		}
-		bytes := make([]byte, sd.rxBuffer)
-		if _, err := sd.port.Read(bytes); serialLogger.IsErr(err) {
-			sd.closePort()
-		}
-		sd.rxChannel <- bytes
-		serialLogger.Debugf("% x", bytes)
-	}
-}
-
-func (sd *Device) serialTX() {
-	for {
-		if !sd.openPort() {
-			continue
-		}
-		bytes := <-sd.txChannel
-		serialLogger.Debugf("% x", bytes)
-		if len(sd.txWroteChannel) > 0 {
-			<-sd.txWroteChannel
-		}
-		if n, err := sd.port.Write(bytes); serialLogger.IsErr(err) || n != len(bytes) {
-			sd.closePort()
-			sd.txWroteChannel <- false
+		if d.rxFormats == nil || d.rxFormatter == nil {
+			bytes = make([]byte, d.rxBuffer)
+			if _, err := d.port.Read(bytes); serialLogger.IsErr(err) {
+				d.closePort()
+			}
+			d.rxChannel <- bytes
+			serialLogger.Debugf("% x", bytes)
 		} else {
-			sd.txWroteChannel <- true
+			aByte = make([]byte, 1)
+			if _, err := d.port.Read(aByte); serialLogger.IsErr(err) {
+				d.closePort()
+			}
+			if buffer, bytes = d.rxHandler(buffer, aByte[0]); bytes != nil {
+				d.rxChannel <- bytes
+				serialLogger.Debugf("% x", bytes)
+			}
 		}
 	}
 }
 
-func (sd *Device) openPort() bool {
-	if sd.port == nil {
-		port, err := serial.OpenPort(sd.serialConfig)
+func (d *Device) serialTX() {
+	for {
+		if !d.openPort() {
+			continue
+		}
+		bytes := <-d.txChannel
+		serialLogger.Debugf("% x", bytes)
+		if len(d.txWroteChannel) > 0 {
+			<-d.txWroteChannel
+		}
+		if n, err := d.port.Write(bytes); serialLogger.IsErr(err) || n != len(bytes) {
+			d.closePort()
+			d.txWroteChannel <- false
+		} else {
+			d.txWroteChannel <- true
+		}
+	}
+}
+
+func (d *Device) openPort() bool {
+	if d.port == nil {
+		port, err := serial.OpenPort(d.serialConfig)
 		if serialLogger.IsErr(err) {
 			time.Sleep(time.Second)
 			return false
 		}
-		sd.port = port
+		d.port = port
 	}
 	return true
 }
 
-func (sd *Device) closePort() bool {
-	if sd.port != nil {
-		err := sd.port.Close()
-		sd.port = nil
+func (d *Device) closePort() bool {
+	if d.port != nil {
+		err := d.port.Close()
+		d.port = nil
 		return !serialLogger.IsErr(err)
 	}
 	return true
+}
+
+type RxFormatter struct {
+	number            int
+	numberOfEnd       int
+	formatterNumber   int
+	formatterIndexMax int
+	length            int
+}
+
+func (d *Device) setRxFormat(rxFormats []RxFormat) {
+	d.rxFormats = rxFormats
+	var rxFormatter RxFormatter = RxFormatter{
+		number:            0,
+		numberOfEnd:       0,
+		formatterNumber:   0,
+		formatterIndexMax: len(rxFormats),
+		length:            0,
+	}
+	d.rxFormatter = &rxFormatter
+}
+
+func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
+	for i := d.rxFormatter.formatterNumber; i < d.rxFormatter.formatterIndexMax; i++ {
+		if len(d.rxFormats[i].StartByte) > 0 && d.rxFormatter.number < len(d.rxFormats[i].StartByte) {
+			if aByte == d.rxFormats[i].StartByte[d.rxFormatter.number] {
+				d.rxFormatter.formatterNumber = i
+				d.rxFormatter.number++
+				return append(bytes, aByte), nil
+			}
+			continue
+		}
+		if len(d.rxFormats[i].EndByte) > 0 {
+			if aByte == d.rxFormats[i].EndByte[d.rxFormatter.numberOfEnd] {
+				d.rxFormatter.numberOfEnd++
+				if len(d.rxFormats[i].EndByte) == d.rxFormatter.numberOfEnd {
+					d.rxFormatter.number = 0
+					d.rxFormatter.numberOfEnd = 0
+					d.rxFormatter.formatterNumber = 0
+					d.rxFormatter.length = 0
+					return nil, append(bytes, aByte)
+				}
+			}
+			return append(bytes, aByte), nil
+		}
+		if d.rxFormats[i].LengthFixed > 0 {
+			d.rxFormatter.length = d.rxFormats[i].LengthFixed
+		} else {
+			if d.rxFormatter.number == d.rxFormats[i].LengthByteIndex {
+				d.rxFormatter.length = int(aByte) + d.rxFormats[i].LengthByteMissing
+			}
+		}
+		d.rxFormatter.number++
+		if d.rxFormatter.number >= d.rxFormatter.length {
+			d.rxFormatter.number = 0
+			d.rxFormatter.numberOfEnd = 0
+			d.rxFormatter.formatterNumber = 0
+			d.rxFormatter.length = 0
+			return nil, append(bytes, aByte)
+		}
+		return append(bytes, aByte), nil
+	}
+	return nil, nil
+}
+
+func (d *Device) testRxFormats(bytes []byte) []byte {
+	var buffer []byte
+	var output []byte
+	if d.rxFormats == nil || d.rxFormatter == nil {
+		return nil
+	}
+	for i := 0; i < len(bytes); i++ {
+		buffer, output = d.rxHandler(buffer, bytes[i])
+		serialLogger.Debugf("Index %v", i)
+		serialLogger.Debugf("buffer % x", buffer)
+		serialLogger.Debugf("output % x", buffer)
+	}
+	return output
 }

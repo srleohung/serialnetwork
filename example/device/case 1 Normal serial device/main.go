@@ -39,24 +39,24 @@ var txWroteChannel chan bool
 
 func main() {
 	// ***** Init serial device *****
-	Device := serialnetwork.NewDevice()
-	err := Device.Init(config)
+	d := serialnetwork.NewDevice()
+	err := d.Init(config)
 	if err != nil {
 		logger.Emerg(err)
 	}
 
 	// ***** Get channel *****
-	if rxChannel = Device.GetRxChannel(); rxChannel != nil {
+	if rxChannel = d.GetRxChannel(); rxChannel != nil {
 		logger.Info("Got RxChannel")
 	}
-	if txChannel = Device.GetTxChannel(); txChannel != nil {
+	if txChannel = d.GetTxChannel(); txChannel != nil {
 		logger.Info("Got TxChannel")
 	}
 	/*
 		If you want to check your tx message have been sent,
 		you can use Tx wrote channel and listen to it.
 	*/
-	if txWroteChannel = Device.GetTxWroteChannel(); txWroteChannel != nil {
+	if txWroteChannel = d.GetTxWroteChannel(); txWroteChannel != nil {
 		logger.Info("Got TxWroteChannel")
 	}
 

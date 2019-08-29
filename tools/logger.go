@@ -30,7 +30,7 @@ var defaultLogLevel map[logLevel]bool = map[logLevel]bool{
 	WARNING: true,
 	NOTICE:  true,
 	INFO:    true,
-	DEBUG:   true,
+	DEBUG:   false,
 }
 
 func NewLogger(name string) Logger {
