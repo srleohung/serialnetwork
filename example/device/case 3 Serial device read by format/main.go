@@ -42,19 +42,19 @@ var rxFormat []serialnetwork.RxFormat = []serialnetwork.RxFormat{
 	},
 	// Format 2
 	{
-		StartByte: []byte{0x011},
-		// EndByte:           []byte{0x09},
+		StartByte:         []byte{0x011},
 		LengthByteIndex:   1,
 		LengthByteMissing: 7,
+		// EndByte:           []byte{0x09},
 		// LengthFixed:       9,
 	},
 	// Format 3
 	{
-		StartByte: []byte{0x21},
+		StartByte:   []byte{0x21},
+		LengthFixed: 9,
 		// EndByte:           []byte{0x09},
 		// LengthByteIndex:   1,
 		// LengthByteMissing: 7,
-		LengthFixed: 9,
 	},
 }
 
@@ -126,6 +126,18 @@ func main() {
 	if txWroteChannel = d.GetTxWroteChannel(); txWroteChannel != nil {
 		logger.Info("Got TxWroteChannel")
 	}
+
+	// ***** Start channel handler service *****
+	/*
+		If you use api calls to control and you don't need to automatic response,
+		please don't run this function.
+	*/
+	/*
+		d.ResponseToServer(ServerHost)
+		d.RequestFromServer(DeviceAddr)
+		forever := make(chan bool)
+		<-forever
+	*/
 
 	// ***** Test channel *****
 	go func() {

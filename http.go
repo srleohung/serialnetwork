@@ -151,7 +151,6 @@ func (s *Server) rxResponse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) txRequest(bytes []byte) bool {
-	httpLogger.Info(s.deviceHost)
 	resp, err := http.Post(s.deviceHost+HTTP_SERIAL_TX_PATH, HTTP_CONTENT_TYPE, NewBuffer(bytes))
 	if httpLogger.IsErr(err) || resp.StatusCode != http.StatusOK {
 		return false

@@ -51,7 +51,7 @@ func main() {
 	// ***** Test Connection *****
 	for {
 		if s.Ping() {
-			logger.Warning("The server is connecting to the device.")
+			logger.Info("The server is connecting to the device.")
 			break
 		} else {
 			logger.Warning("The server cannot connect to the device.")
@@ -80,17 +80,6 @@ func main() {
 	// ***** Start channel handler service *****
 	s.ResponseFromDevice(ServerAddr)
 	s.RequestToDevice(DeviceHost)
-
-	// ***** Test Connection *****
-	for {
-		if s.Ping() {
-			logger.Warning("The server is connecting to the device.")
-			break
-		} else {
-			logger.Warning("The server cannot connect to the device.")
-			time.Sleep(1 * time.Second)
-		}
-	}
 
 	// ***** Test channel *****
 	txChannel <- message
