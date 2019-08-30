@@ -22,21 +22,21 @@ const (
 	DEBUG   logLevel = 7
 )
 
-var defaultLogLevel map[logLevel]bool = map[logLevel]bool{
+var LogLevel map[logLevel]bool = map[logLevel]bool{
 	EMERG:   true,
 	ALERT:   true,
 	CRIT:    true,
-	ERR:     true,
+	ERR:     false,
 	WARNING: true,
 	NOTICE:  true,
 	INFO:    true,
-	DEBUG:   true,
+	DEBUG:   false,
 }
 
 func NewLogger(name string) Logger {
 	return Logger{
 		name:     name,
-		logLevel: defaultLogLevel,
+		logLevel: LogLevel,
 	}
 }
 

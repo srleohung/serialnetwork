@@ -64,10 +64,10 @@ func main() {
 		You can call initialization from server api.
 		If you don't want, you don't need to run initialize(s.InitDevice(config)).
 	*/
-	err = s.InitDevice(config)
-	if err != nil {
-		logger.Emerg(err)
-	}
+	// err = s.InitDevice(config)
+	// if err != nil {
+	// 	logger.Emerg(err)
+	// }
 
 	// ***** Get channel *****
 	if rxChannel = s.GetRxChannel(); rxChannel != nil {

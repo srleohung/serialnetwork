@@ -8,8 +8,8 @@ import (
 
 var logger Logger = NewLogger("main")
 
-var firstConfig serialnetwork.Config = serialnetwork.Config{
-	Name: "/dev/ttyUSB1",
+var config1 serialnetwork.Config = serialnetwork.Config{
+	Name: "/dev/ttyUSB0",
 	Baud: 115200,
 	// ReadTimeout: 1000 * time.Millisecond,
 	Size:   8,
@@ -31,7 +31,7 @@ var firstConfig serialnetwork.Config = serialnetwork.Config{
 	ServerHost: "http://localhost:9876",
 }
 
-var secondConfig serialnetwork.Config = serialnetwork.Config{
+var config2 serialnetwork.Config = serialnetwork.Config{
 	Name: "/dev/ttyUSB0",
 	Baud: 115200,
 	// ReadTimeout: 1000 * time.Millisecond,
@@ -117,10 +117,10 @@ func main() {
 		You can call initialization from server api.
 		If you don't want, you don't need to run initialize(s.InitDevice(config)).
 	*/
-	err = s.InitDevice(firstConfig)
-	if err != nil {
-		logger.Emerg(err)
-	}
+	// err = s.InitDevice(config1)
+	// if err != nil {
+	// 	logger.Emerg(err)
+	// }
 
 	// ***** Get first serial device channel *****
 	if rx1 = s.GetRxChannel(); rx1 != nil {
@@ -137,7 +137,7 @@ func main() {
 	// ***** Init second serial device *****
 	d := serialnetwork.NewDevice()
 	d.SetRxFormat(rxFormat)
-	err = d.Init(secondConfig)
+	err = d.Init(config2)
 	if err != nil {
 		logger.Emerg(err)
 	}

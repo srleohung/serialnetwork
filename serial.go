@@ -46,6 +46,7 @@ func (d *Device) init(config Config) error {
 }
 
 func (d *Device) serialRX() {
+	defer serialLogger.Debug("Unable to run serialRX.")
 	var bytes []byte
 	var aByte []byte
 	var buffer []byte
@@ -72,10 +73,10 @@ func (d *Device) serialRX() {
 		}
 	}
 	d.startable = false
-	serialLogger.Debug("Unable to run serialRX.")
 }
 
 func (d *Device) serialTX() {
+	defer serialLogger.Debug("Unable to run serialTX.")
 	for {
 		if !d.openPort() {
 			continue
@@ -93,7 +94,6 @@ func (d *Device) serialTX() {
 		}
 	}
 	d.startable = false
-	serialLogger.Debug("Unable to run serialTX.")
 }
 
 func (d *Device) openPort() bool {
@@ -188,7 +188,7 @@ func (d *Device) testRxFormats(bytes []byte) []byte {
 	}
 	for i := 0; i < len(bytes); i++ {
 		buffer, output = d.rxHandler(buffer, bytes[i])
-		serialLogger.Debugf("Index %v", i)
+		serialLogger.Debugf("index %v", i)
 		serialLogger.Debugf("buffer % x", buffer)
 		serialLogger.Debugf("output % x", buffer)
 	}

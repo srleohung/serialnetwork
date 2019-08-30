@@ -31,7 +31,7 @@ var config serialnetwork.Config = serialnetwork.Config{
 	// ServerHost: "",
 }
 
-var message []byte = []byte("1")
+var message []byte = []byte("test")
 
 var rxChannel chan []byte
 var txChannel chan []byte
