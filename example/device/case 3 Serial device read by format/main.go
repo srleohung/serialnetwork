@@ -83,27 +83,27 @@ func main() {
 	// ***** Test rx format *****
 	bytes := d.TestRxFormats(message1)
 	if len(bytes) != len(message1) {
-		logger.Emerg("Unknown massage in Rx format.")
+		logger.Emerg("Unknown message in Rx format.")
 	} else {
-		logger.Info("Can handle the wrong massage 1 in Rx format")
+		logger.Info("Can handle the wrong message 1 in Rx format")
 	}
 	bytes = d.TestRxFormats(message2)
 	if len(bytes) != len(message2) {
-		logger.Emerg("Unknown massage in Rx format.")
+		logger.Emerg("Unknown message in Rx format.")
 	} else {
-		logger.Info("Can handle the wrong massage 2 in Rx format")
+		logger.Info("Can handle the wrong message 2 in Rx format")
 	}
 	bytes = d.TestRxFormats(message3)
 	if len(bytes) != len(message3) {
-		logger.Emerg("Unknown massage in Rx format.")
+		logger.Emerg("Unknown message in Rx format.")
 	} else {
-		logger.Info("Can handle the wrong massage 3 in Rx format")
+		logger.Info("Can handle the wrong message 3 in Rx format")
 	}
 	bytes = d.TestRxFormats(message4)
 	if len(bytes) != len(message4) {
-		logger.Infof("Can handle the wrong massage in Rx format. After filter length %v", len(bytes))
+		logger.Infof("Can handle the wrong message in Rx format. After filter length %v", len(bytes))
 	} else {
-		logger.Emerg("The wrong massage in Rx format cannot be processed.")
+		logger.Emerg("The wrong message in Rx format cannot be processed.")
 	}
 
 	// ***** Init serial device *****

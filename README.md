@@ -3,8 +3,7 @@ A Go package to allow you easily to read and write from the serial port uses cha
 
 # Usage
 ## Device
-#### rxChannel for read from the serial port
-#### txChannel for write to the serial port
+#### RxChannel for read from the serial port. TxChannel for write to the serial port.
 ```
 package main
 
@@ -24,8 +23,9 @@ func main() {
 	log.Printf("% x", <-rx)
 }
 ```
-#### read the serial port by format
+#### Read the serial port by format
 ```
+message := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}
 var rxFormat []serialnetwork.RxFormat = []serialnetwork.RxFormat{
 	// Example format 1
 	{
@@ -34,19 +34,25 @@ var rxFormat []serialnetwork.RxFormat = []serialnetwork.RxFormat{
 	},
 	// Example format 2
 	{
-		StartByte:         []byte{0x011},
+		StartByte:         []byte{0x01},
 		LengthByteIndex:   1,
 		LengthByteMissing: 7,
 	},
 	// Example format 3
 	{
-		StartByte:   []byte{0x21},
+		StartByte:   []byte{0x01},
 		LengthFixed: 9,
 	},
 }
+
 d.SetRxFormat(rxFormat)
+
+bytes := d.TestRxFormats(message)
+if len(bytes) != len(message) {
+	log.Print("Unknown message in Rx format.")
+}
 ```
-#### Example link - https://github.com/srleohung/serialnetwork/blob/master/example/device/case%203%20Serial%20device%20read%20by%20format/main.go
+* Example - https://github.com/srleohung/serialnetwork/blob/master/example/device/case%203%20Serial%20device%20read%20by%20format/main.go
 ## Server
 #### Please read examples of serial device and server.
 * Serial device examples - https://github.com/srleohung/serialnetwork/tree/master/example/device
