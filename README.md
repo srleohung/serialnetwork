@@ -33,6 +33,7 @@ func main() {
 * Return error message and device connection status to server.
 * Use RWMutex to prevent error signals.
 * Upgrade device automatically reconnects.
+* The Init device from the server is not working properly.
 
 # Startup Reason
 This package is startup of a unmanned store projects. A host to controls many vending machine, camera, payment device. This package is for many different devices connected to one server.
