@@ -78,14 +78,15 @@ func (d *Device) serialRX() {
 func (d *Device) serialTX() {
 	defer serialLogger.Debug("Unable to run serialTX.")
 	for {
-		if !d.openPort() {
-			continue
-		}
 		bytes := <-d.txChannel
-		serialLogger.Debugf("% x", bytes)
 		if len(d.txWroteChannel) > 0 {
 			<-d.txWroteChannel
 		}
+		if !d.openPort() {
+			d.txWroteChannel <- false
+			continue
+		}
+		serialLogger.Debugf("% x", bytes)
 		if n, err := d.port.Write(bytes); serialLogger.IsErr(err) || n != len(bytes) {
 			d.closePort()
 			d.txWroteChannel <- false
