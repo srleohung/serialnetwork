@@ -164,8 +164,11 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 		if d.rxFormats[i].LengthFixed > 0 {
 			d.rxFormatter.length = d.rxFormats[i].LengthFixed
 		} else {
+			if d.rxFormats[i].LengthHighByteIndex > 0 && d.rxFormatter.number == d.rxFormats[i].LengthHighByteIndex {
+				d.rxFormatter.length = d.rxFormatter.length + int(aByte<<8)
+			}
 			if d.rxFormatter.number == d.rxFormats[i].LengthByteIndex {
-				d.rxFormatter.length = int(aByte) + d.rxFormats[i].LengthByteMissing
+				d.rxFormatter.length = d.rxFormatter.length + int(aByte) + d.rxFormats[i].LengthByteMissing
 			}
 		}
 		d.rxFormatter.number++

@@ -31,11 +31,12 @@ type Config struct {
 }
 
 type RxFormat struct {
-	StartByte         []byte
-	EndByte           []byte
-	LengthByteIndex   int
-	LengthByteMissing int
-	LengthFixed       int
+	StartByte           []byte
+	EndByte             []byte
+	LengthByteIndex     int
+	LengthByteMissing   int
+	LengthFixed         int
+	LengthHighByteIndex int
 }
 
 const (
