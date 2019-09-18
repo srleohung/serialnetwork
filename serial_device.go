@@ -37,6 +37,7 @@ type RxFormat struct {
 	LengthByteMissing   int
 	LengthFixed         int
 	LengthHighByteIndex int
+	LengthDecoder       string
 }
 
 const (

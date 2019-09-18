@@ -8,6 +8,8 @@ import (
 	"strconv"
 )
 
+const BINARY_CODED_DECIMAL = "bcd"
+
 func Encode(x int) (y int) {
 	s := strconv.Itoa(x)
 	for i, r := range s {

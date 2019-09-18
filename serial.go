@@ -1,6 +1,7 @@
 package serialnetwork
 
 import (
+	"github.com/srleohung/serialnetwork/encoding/bcd"
 	. "github.com/srleohung/serialnetwork/tools"
 	"github.com/tarm/serial"
 	"time"
@@ -144,6 +145,13 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 			if aByte == d.rxFormats[i].StartByte[d.rxFormatter.number] {
 				d.rxFormatter.formatterNumber = i
 				d.rxFormatter.number++
+				if d.rxFormats[i].LengthFixed > 0 && d.rxFormatter.number == d.rxFormats[i].LengthFixed {
+					d.rxFormatter.number = 0
+					d.rxFormatter.numberOfEnd = 0
+					d.rxFormatter.formatterNumber = 0
+					d.rxFormatter.length = 0
+					return nil, append(bytes, aByte)
+				}
 				return append(bytes, aByte), nil
 			}
 			continue
@@ -165,10 +173,22 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 			d.rxFormatter.length = d.rxFormats[i].LengthFixed
 		} else {
 			if d.rxFormats[i].LengthHighByteIndex > 0 && d.rxFormatter.number == d.rxFormats[i].LengthHighByteIndex {
-				d.rxFormatter.length = d.rxFormatter.length + int(aByte<<8)
+				d.rxFormatter.length = d.rxFormatter.length + int(aByte)<<8
+				if d.rxFormats[i].LengthHighByteIndex > d.rxFormats[i].LengthByteIndex {
+					d.rxFormatter.length = d.rxFormatter.length + d.rxFormats[i].LengthByteMissing
+					if d.rxFormats[i].LengthDecoder != "" {
+						d.rxFormatter.length = d.lengthDecoder(d.rxFormats[i].LengthDecoder, aByte, bytes[d.rxFormats[i].LengthByteIndex]) + d.rxFormats[i].LengthByteMissing
+					}
+				}
 			}
 			if d.rxFormatter.number == d.rxFormats[i].LengthByteIndex {
-				d.rxFormatter.length = d.rxFormatter.length + int(aByte) + d.rxFormats[i].LengthByteMissing
+				d.rxFormatter.length = d.rxFormatter.length + int(aByte)
+				if d.rxFormats[i].LengthHighByteIndex < d.rxFormats[i].LengthByteIndex {
+					d.rxFormatter.length = d.rxFormatter.length + d.rxFormats[i].LengthByteMissing
+					if d.rxFormats[i].LengthDecoder != "" {
+						d.rxFormatter.length = d.lengthDecoder(d.rxFormats[i].LengthDecoder, bytes[d.rxFormats[i].LengthHighByteIndex], aByte) + d.rxFormats[i].LengthByteMissing
+					}
+				}
 			}
 		}
 		d.rxFormatter.number++
@@ -182,6 +202,14 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 		return append(bytes, aByte), nil
 	}
 	return nil, nil
+}
+
+func (d *Device) lengthDecoder(decoder string, highByte, lowByte byte) int {
+	switch decoder {
+	case bcd.BINARY_CODED_DECIMAL:
+		return bcd.Decode(int(highByte)<<8 + int(lowByte))
+	}
+	return int(highByte)<<8 + int(lowByte)
 }
 
 func (d *Device) testRxFormats(bytes []byte) []byte {

@@ -5,6 +5,8 @@ In longitudinal redundancy checking and cyclic redundancy checking, block check 
 */
 package bcc
 
+const BLOCK_CHECK_CHARACTER string = "bcc"
+
 func Encode(bytes []byte) (sum byte) {
 	for _, aByte := range bytes {
 		sum ^= aByte
