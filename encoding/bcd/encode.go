@@ -12,7 +12,7 @@ func Encode(x int) (y int) {
 	s := strconv.Itoa(x)
 	for i, r := range s {
 		_r, _ := strconv.Atoi(string(r))
-		y = y + _r<<(4*(len(s)-1-i))
+		y = y + _r<<uint(4*(len(s)-1-i))
 	}
 	return y
 }
@@ -22,8 +22,8 @@ func Decode(x int) (y int) {
 	var _y string
 	s := strconv.Itoa(x)
 	for i, _ := range s {
-		_x := (x - _s) >> (4 * (len(s) - 1 - i))
-		_s = _s + _x<<(4*(len(s)-1-i))
+		_x := (x - _s) >> uint(4*(len(s)-1-i))
+		_s = _s + _x<<uint(4*(len(s)-1-i))
 		_y = _y + strconv.Itoa(_x)
 	}
 	y, _ = strconv.Atoi(_y)
