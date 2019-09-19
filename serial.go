@@ -139,6 +139,13 @@ func (d *Device) setRxFormat(rxFormats []RxFormat) {
 	d.rxFormatter = &rxFormatter
 }
 
+func (d *Device) initFormater() {
+	d.rxFormatter.number = 0
+	d.rxFormatter.numberOfEnd = 0
+	d.rxFormatter.formatterNumber = 0
+	d.rxFormatter.length = 0
+}
+
 func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 	for i := d.rxFormatter.formatterNumber; i < d.rxFormatter.formatterIndexMax; i++ {
 		if len(d.rxFormats[i].StartByte) > 0 && d.rxFormatter.number < len(d.rxFormats[i].StartByte) {
@@ -146,10 +153,7 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 				d.rxFormatter.formatterNumber = i
 				d.rxFormatter.number++
 				if d.rxFormats[i].LengthFixed > 0 && d.rxFormatter.number == d.rxFormats[i].LengthFixed {
-					d.rxFormatter.number = 0
-					d.rxFormatter.numberOfEnd = 0
-					d.rxFormatter.formatterNumber = 0
-					d.rxFormatter.length = 0
+					d.initFormater()
 					return nil, append(bytes, aByte)
 				}
 				return append(bytes, aByte), nil
@@ -160,10 +164,7 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 			if aByte == d.rxFormats[i].EndByte[d.rxFormatter.numberOfEnd] {
 				d.rxFormatter.numberOfEnd++
 				if len(d.rxFormats[i].EndByte) == d.rxFormatter.numberOfEnd {
-					d.rxFormatter.number = 0
-					d.rxFormatter.numberOfEnd = 0
-					d.rxFormatter.formatterNumber = 0
-					d.rxFormatter.length = 0
+					d.initFormater()
 					return nil, append(bytes, aByte)
 				}
 			}
@@ -193,14 +194,12 @@ func (d *Device) rxHandler(bytes []byte, aByte byte) ([]byte, []byte) {
 		}
 		d.rxFormatter.number++
 		if d.rxFormatter.length != 0 && d.rxFormatter.number >= d.rxFormatter.length {
-			d.rxFormatter.number = 0
-			d.rxFormatter.numberOfEnd = 0
-			d.rxFormatter.formatterNumber = 0
-			d.rxFormatter.length = 0
+			d.initFormater()
 			return nil, append(bytes, aByte)
 		}
 		return append(bytes, aByte), nil
 	}
+	d.initFormater()
 	return nil, nil
 }
 
