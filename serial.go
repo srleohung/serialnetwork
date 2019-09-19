@@ -33,6 +33,9 @@ func (d *Device) init(config Config) error {
 	}
 	d.serialConfig = &serialConfig
 	if port, err := serial.OpenPort(&serialConfig); !serialLogger.IsErr(err) {
+		if err := port.Flush(); serialLogger.IsErr(err) {
+			return err
+		}
 		d.port = port
 	} else {
 		return err
