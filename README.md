@@ -1,5 +1,5 @@
 # Serial Network
-A Go package to allow you easily to read and write from the serial port uses channel or API call. This package can help you to easily make the serial network to remotely control your device. This package depends on github.com/tarm/serial.
+A Go package to allow you easily to read and write from the serial port uses channel or API call. This package can help you to easily make the serial network to remotely control your device. This package depends on github.com/tarm/serial and github.com/gorilla/websocket.
 
 # Usage
 
@@ -84,11 +84,12 @@ if len(bytes) != len(message) {
   * https://github.com/srleohung/serialnetwork/tree/master/example/server
 
 # Possible Future Work
-* Return error message and device connection status to server.
+* Return error messages and device connection status to the server.
 * Use RWMutex to prevent error signals.
 * Upgrade device automatically reconnects.
-* The Init device from the server is not working properly.
-* Add additional encodings for use.
+* The Init device on the server is not working properly.
+* Add other encodings for use.
+* Upgrade websocket to automatically reconnect.
 
 # Startup Reason
 This package is startup of a unmanned store projects. A host to controls many vending machine, camera, payment device. This package is for many different devices connected to one server.

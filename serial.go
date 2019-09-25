@@ -76,7 +76,6 @@ func (d *Device) serialRX() {
 			}
 		}
 	}
-	d.startable = false
 }
 
 func (d *Device) serialTX() {
@@ -98,7 +97,6 @@ func (d *Device) serialTX() {
 			d.txWroteChannel <- true
 		}
 	}
-	d.startable = false
 }
 
 func (d *Device) openPort() bool {
@@ -222,9 +220,7 @@ func (d *Device) testRxFormats(bytes []byte) []byte {
 	}
 	for i := 0; i < len(bytes); i++ {
 		buffer, output = d.rxHandler(buffer, bytes[i])
-		serialLogger.Debugf("index %v", i)
-		serialLogger.Debugf("buffer % x", buffer)
-		serialLogger.Debugf("output % x", buffer)
+		serialLogger.Debug("index: ", i, " buffer: ", buffer, " output: ", output)
 	}
 	return output
 }

@@ -1,6 +1,7 @@
 package serialnetwork
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/tarm/serial"
 	"time"
 )
@@ -17,6 +18,7 @@ type Device struct {
 	deviceAddr     string
 	rxFormats      []RxFormat
 	rxFormatter    *RxFormatter
+	connection     *websocket.Conn
 }
 
 type Config struct {
@@ -70,19 +72,58 @@ func NewDevice() *Device {
 	}
 }
 
+// Initialize the serial port and channel
+
 func (d *Device) Init(config Config) error {
 	return d.init(config)
 }
 
-// Serial Rx
+// Serial port control
+
+func (d *Device) OpenPort() bool {
+	return d.openPort()
+}
+
+func (d *Device) ClosePort() bool {
+	return d.closePort()
+}
+
+// Get serial read channel
+
+func (d *Device) GetRxChannel() chan []byte {
+	return d.rxChannel
+}
+
+// Get serial write channel
+
+func (d *Device) GetTxChannel() chan []byte {
+	return d.txChannel
+}
+
+func (d *Device) GetTxWroteChannel() chan bool {
+	return d.txWroteChannel
+}
+
+// Set the serial read format
 
 func (d *Device) SetRxFormat(rxFormats []RxFormat) {
 	d.setRxFormat(rxFormats)
 }
 
-func (d *Device) GetRxChannel() chan []byte {
-	return d.rxChannel
+// Test serial read format
+
+func (d *Device) TestRxFormats(bytes []byte) []byte {
+	return d.testRxFormats(bytes)
 }
+
+// Establish a network socket connection
+
+func (d *Device) NewWebSocketClient(serverHost string) error {
+	d.SetServerHost(serverHost)
+	return d.newWebSocketClient(serverHost)
+}
+
+// Establish an api server connection
 
 func (d *Device) ResponseToServer(serverHost string) {
 	d.SetServerHost(serverHost)
@@ -93,30 +134,6 @@ func (d *Device) SetServerHost(serverHost string) {
 	d.serverHost = serverHost
 }
 
-// Serial Tx
-
-func (d *Device) GetTxChannel() chan []byte {
-	return d.txChannel
-}
-
-func (d *Device) GetTxWroteChannel() chan bool {
-	return d.txWroteChannel
-}
-
 func (d *Device) RequestFromServer(deviceAddr string) {
 	go d.requestFromServer(deviceAddr)
-}
-
-func (d *Device) OpenPort() bool {
-	return d.openPort()
-}
-
-func (d *Device) ClosePort() bool {
-	return d.closePort()
-}
-
-// Test
-
-func (d *Device) TestRxFormats(bytes []byte) []byte {
-	return d.testRxFormats(bytes)
 }
