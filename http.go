@@ -21,8 +21,6 @@ const (
 	HTTP_CONTENT_JSON_TYPE string = "application/json"
 )
 
-// Serial device
-
 func (d *Device) initDevice(w http.ResponseWriter, r *http.Request) {
 	if body, err := ioutil.ReadAll(r.Body); !httpLogger.IsErr(err) {
 		var config Config
@@ -92,8 +90,6 @@ func (d *Device) txRequestAndRxResponse(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
-
-// Serial server
 
 func (s *Server) init() error {
 	s.rxChannel = make(chan []byte)

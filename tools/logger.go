@@ -26,11 +26,11 @@ var LogLevel map[logLevel]bool = map[logLevel]bool{
 	EMERG:   true,
 	ALERT:   true,
 	CRIT:    true,
-	ERR:     true,
+	ERR:     false,
 	WARNING: true,
 	NOTICE:  true,
 	INFO:    true,
-	DEBUG:   true,
+	DEBUG:   false,
 }
 
 func NewLogger(name string) Logger {
