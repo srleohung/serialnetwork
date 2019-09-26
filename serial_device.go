@@ -116,7 +116,7 @@ func (d *Device) TestRxFormats(bytes []byte) []byte {
 	return d.testRxFormats(bytes)
 }
 
-// Establish a network socket connection
+// Establish a network socket connection client
 
 func (d *Device) NewWebSocketClient(serverHost string) error {
 	d.SetServerHost(serverHost)

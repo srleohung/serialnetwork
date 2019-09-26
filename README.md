@@ -16,11 +16,15 @@ import (
 
 func main() {
 	d := serialnetwork.NewDevice()
+
+    // Initialize and establish a serial port connection
 	d.Init(serialnetwork.Config{Name: "/dev/ttyUSB0", Baud: 115200, RxBuffer: 1})
 
+    // Get serial read and write channel
 	rx := d.GetRxChannel()
 	tx := d.GetTxChannel()
 
+    // Use channels to read and write
 	tx <- []byte("test")
 	log.Printf("% x", <-rx)
 }
@@ -28,18 +32,21 @@ func main() {
 
 #### Read the serial port by format
 ```
+// Set the serial read format
 d.SetRxFormat([]serialnetwork.RxFormat{
 	{StartByte: []byte{0x01}, EndByte: []byte{0x09}},
 	{StartByte: []byte{0x01}, LengthByteIndex: 1, LengthByteMissing: 7},
 	{StartByte: []byte{0x01}, LengthFixed: 9},
 })
 
+// Test sample read format
 message := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}
 bytes := d.TestRxFormats(message)
 if len(bytes) != len(message) {
 	log.Print("Unknown message in Rx format.")
 }
 
+// Test serial read format
 message = <-d.GetRxChannel()
 bytes = d.TestRxFormats(message)
 if len(bytes) != len(message) {
@@ -77,11 +84,21 @@ if len(bytes) != len(message) {
 
 ## Server
 
+#### Establish a network socket connection server for serial server
+```
+s.NewWebSocketServer(":9876")
+```
+
+#### Establish a network socket connection client for serial device
+```
+d.NewWebSocketClient("localhost:9876")
+```
+
 #### Please read examples of serial device and server.
-* Serial device examples
-  * https://github.com/srleohung/serialnetwork/tree/master/example/device
-* Serial server examples 
-  * https://github.com/srleohung/serialnetwork/tree/master/example/server
+* Serial device example
+  * https://github.com/srleohung/serialnetwork/blob/master/example/device/case%204%20Remote%20serial%20device%20use%20websocket/main.go
+* Serial server example
+  * https://github.com/srleohung/serialnetwork/blob/master/example/server/case%204%20Remote%20serial%20device%20use%20websocket/main.go
 
 # Possible Future Work
 * Return error messages and device connection status to the server.
