@@ -94,7 +94,7 @@ s.NewWebSocketServer(":9876")
 d.NewWebSocketClient("localhost:9876")
 ```
 
-#### Please read examples of serial device and server.
+#### Read examples of serial device and server for more information
 * Serial device example
   * https://github.com/srleohung/serialnetwork/blob/master/example/device/case%204%20Remote%20serial%20device%20use%20websocket/main.go
 * Serial server example
