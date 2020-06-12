@@ -6,7 +6,7 @@ A Go package to allow you easily to read and write from the serial port uses cha
 ## Device
 
 #### RxChannel for read from the serial port. TxChannel for write to the serial port.
-```
+```go
 package main
 
 import (
@@ -31,7 +31,7 @@ func main() {
 ```
 
 #### Read the serial port by format
-```
+```go
 // Set the serial read format
 d.SetRxFormat([]serialnetwork.RxFormat{
 	{StartByte: []byte{0x01}, EndByte: []byte{0x09}},
@@ -85,12 +85,12 @@ if len(bytes) != len(message) {
 ## Server
 
 #### Establish a network socket connection server for serial server
-```
+```go
 s.NewWebSocketServer(":9876")
 ```
 
 #### Establish a network socket connection client for serial device
-```
+```go
 d.NewWebSocketClient("localhost:9876")
 ```
 
